@@ -1,0 +1,103 @@
+\subsection{Polynomial Hashing}
+\subsection{Fenwick Tree on Hashes}
+\subsection{Hashing Rooted Trees for Isomorphism}
+
+In a Chinese blog \cite{TreeHash} the following technique for checking rooted trees for isomorphism using hashing is described.
+Let $s(a)$ be the rooted subtree at vertex $a$ and $v_1, v_2 \dots v_k$ are children of vertex $a$.
+Then we will define a isomorphic hash function as follows:
+
+\begin{center}
+  $\displaystyle h(s(a)) = 1 + \sum_{i=1}^{k} f(h(s(v_i)))$
+\end{center}
+
+The function $f$ is defined as follows:
+
+\begin{lstlisting}
+const ll HB = 1237123, HS = 19260817;
+ll h(ll x) {
+  return x * x * x * HB + HS;
+}
+ll f(ll x) {
+  return h(x & ((1 << 31) - 1)) + h(x >> 31);
+}
+\end{lstlisting}
+
+\textit{Note.} HB and HS are constants, which can be changed if the hash is seen to collide.
+
+It can be proved that if $f$ is a random function,
+the expected number of collisions of such a hash under natural overflow is no more than
+$O(\frac{n^2}{2^w})$. TODO: Proof this.
+
+\newpage
+
+\subsection{Nimber Field}
+
+The Nim product $a \otimes b$ is an operation defined as follows:
+
+\begin{center}
+$a \otimes b = mex\{(a\prime \otimes b) \otimes (a \otimes b\prime) \otimes (a\prime \otimes b\prime) | a\prime < a, b\prime < b\}$
+\end{center}
+
+If ordinarily in rolling hashes, we have the following structure:
+
+\begin{center}
+  $\displaystyle R(A) = \left( \sum_{i = 1}^{N} A_i \cdot x^{(N - i)} \right)$ (mod $p$)
+\end{center}
+
+In the Nimber field the structure remains the same, but the operations change.
+
+\begin{center}
+  $\displaystyle R(A) = \left( {XOR}_{i = 1}^{N} \left[A_i \otimes x^{(N - i)} \right] \right)$
+\end{center}
+
+Each query gives you integers $a$, $b$, $c$, $d$, $e$, and $f$, each between $1$ and $N$, inclusive.
+These integers satisfy $a \leq b$, $c \leq d$, $e \leq f$, and $b-a = d-c$. If $S(A(a,b),A(c,d))$ is strictly
+lexicographically smaller than $A(e,f)$, print Yes; otherwise, print No.
+
+\begin{lstlisting}
+using u64 = unsigned long long;
+constexpr int N_MAX = 1e6 + 10;
+int N, Q;
+u64 A[N_MAX], pw[N_MAX], hs[N_MAX], basis, small[256][256];
+template <bool is_pre = false>
+u64 nim_product(u64 a, u64 b, int p = 64) {
+  if (min(a, b) <= 1) return a * b;
+  if (!is_pre and p <= 8) return small[a][b];
+  p >>= 1;
+  u64 a1 = a >> p, a2 = a & ((1ull << p) - 1);
+  u64 b1 = b >> p, b2 = b & ((1ull << p) - 1);
+  u64 c = nim_product<is_pre>(a1, b1, p);
+  u64 d = nim_product<is_pre>(a2, b2, p);
+  u64 e = nim_product<is_pre>(a1 ^ a2, b1 ^ b2, p);
+  return nim_product<is_pre>(c, 1uLL << (p - 1), p) ^ d ^ ((d ^ e) << p);
+}
+void init() {
+  for (int i = 0; i < 256; i++)
+    for (int j = 0; j < 256; j++) small[i][j] = nim_product<true>(i, j, 8);
+  pw[0] = 1, hs[0] = basis = 0;
+  mt19937_64 rng(time(NULL));
+  basis = rng();
+  for (int i = 1; i <= N; i++) {
+    pw[i] = nim_product(pw[i - 1], basis);
+    hs[i] = nim_product(hs[i - 1], basis) ^ A[i - 1];
+  }
+}
+u64 get(int l, int r) { return nim_product(hs[l], pw[r - l]) ^ hs[r]; }
+void send(int flag) { printf(flag ? "Yes\n" : "No\n"); }
+int main() {
+  scanf("%d %d", &N, &Q);
+  for (int i = 0; i < N; i++) scanf("%llu", &(A[i]));
+  init();
+  while (Q--) {
+    int a, b, c, d, e, f;
+    scanf("%d %d %d %d %d %d", &a, &b, &c, &d, &e, &f);
+    --a, --c, --e;
+    int l = 0, h = min(f - e, b - a) + 1;
+    while (l + 1 < h) {
+      int m = (l + h) / 2;
+      ((get(a, a + m) ^ get(c, c + m) ^ get(e, e + m)) ? h : l) = m;
+    }
+    send(e + l != f and (a + l == b or (A[a + l] ^ A[c + l]) < A[e + l]));
+  }
+}
+\end{lstlisting}

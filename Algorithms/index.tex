@@ -1,0 +1,33 @@
+\subsection{Binary and Ternary Search Function}
+\subsection{Index Compression}
+\subsection{Fast Eratosthenes Sieve}
+
+\begin{lstlisting}
+struct Sieve {
+  static const int N = 1e5 + 1000;
+  int lp[N+1], pr[N+1];
+  int counter = 0;
+
+  Sieve() {
+    for (int i = 0; i < N; i++) {
+      pr[i] = -1;
+      lp[i] = 0;
+    }
+    
+    for (int i = 2; i <= N; ++i) {
+      if (lp[i] == 0) {
+        lp[i] = i;
+        pr[counter++] = i;
+      }
+      for (int j = 0; j < counter && pr[j] <= lp[i] && i * pr[j] <= N; ++j)
+        lp[i * pr[j]] = pr[j];
+    }
+  }
+};
+\end{lstlisting}
+
+\subsection{Mo's Algorithm}
+\subsection{Merge Sort}
+\subsection{K-th Order Statistic}
+\subsection{K-th Shortest Paths}
+\subsection{Shunting Yard}

@@ -1,0 +1,859 @@
+\subsection{Disjoint Set Union}
+
+A Disjoint Set Union (DSU) is a data structure capable of storing sets of vertices,
+merging sets and checking if two elements belong in the same set in almost $O(1)$ time.
+\cite{DSUCPAlgo}
+\newline
+
+\begin{center}
+\begin{minipage}[t]{0.45\linewidth}
+The following implementation of a DSU includes path compression, union by size and set sizes.
+\begin{lstlisting}
+struct dsu {
+  vector<int> parent;
+  dsu(int n) : parent(n, -1) {}
+
+  int find_set(int a) {
+    if (parent[a] < 0) return a;
+    return parent[a] = find_set(parent[a]);
+  }
+
+  int merge(int a, int b) {
+    int x = find_set(a), y = find_set(b);
+    if (x == y) return x;
+    if (-parent[x] < -parent[y]) swap(x, y);
+    parent[x] += parent[y];
+    parent[y] = x;
+    return x;
+  }
+
+  bool are_same(int a, int b) {
+    return find_set(a) == find_set(b);
+  }
+
+  int size(int a) {
+    return -parent[find_set(a)];
+  }
+};
+\end{lstlisting}
+\end{minipage}
+\qquad
+\begin{minipage}[t]{0.45\linewidth}
+When extending the data structure to allow rollbacks,
+we can't use path compression, but we will still get $O(log(n))$
+time per query due to the implementation of union by size.
+\begin{lstlisting}
+\end{lstlisting}
+\end{minipage}
+\end{center}
+
+In some DSU applications \cite{DSUCPAlgo}, we need to keep track of the distance from $u$
+to its root. If we don't use path compression, the distance is just the number
+of recursive calls. But this will be inefficient. However, we can store
+the distance to the root in each node and modify the distances when doing the path compression.
+
+\begin{lstlisting}
+// the parent vector has to be 
+// modified to store { v, 0 } by default
+// returns { root, distance }
+pair<int, int> find_set(int v) {
+  if (v != parent[v].first) {
+      int len = parent[v].second;
+      parent[v] = find_set(parent[v].first);
+      parent[v].second += len;
+  }
+  return parent[v];
+}
+\end{lstlisting}
+
+\newpage
+
+\subsection{Disjoint Set Union with Queue-like Undo}
+
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+struct DSU {
+  vector<int> rank, link;
+  vector<int> stk, chkp;
+  
+  DSU(int n) : rank(2 * n, 0), link(2 * n, -1) {}
+  
+  int find(int x) {
+    while (link[x] != -1) 
+      x = link[x];
+    return x;
+  }
+  void unite(int a, int b) {
+    a = find(a); b = find(b);
+    if (a == b) return;
+    if (rank[a] > rank[b]) swap(a, b);
+    stk.push_back(a);
+    link[a] = b;
+    rank[b] += (rank[a] == rank[b]);
+  }
+  
+  bool Try(int a, int b) {
+    if (find(2 * a + 1) == find(2 * b + 1))
+      return false;
+    return true;
+  }
+  
+  void Unite(int a, int b) {
+    chkp.push_back(stk.size());
+    unite(2 * a, 2 * b + 1);
+    unite(2 * a + 1, 2 * b);
+    assert(find(2 * a) != find(2 * a + 1));
+  }
+  
+  void Undo() {
+    for (int i = chkp.back(); i < (int)stk.size(); ++i)
+      link[stk[i]] = -1;
+    stk.resize(chkp.back());
+    chkp.pop_back();
+  }
+};
+  
+struct Upd {
+  int type, a, b;
+};
+
+\end{lstlisting}
+\end{minipage}
+\qquad
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+
+int main() {  
+  DSU dsu(n);
+  vector<Upd> upds, tmp[2];
+  int rem_a = 0;
+  auto pop = [&]() {
+    if (rem_a == 0) {
+      reverse(upds.begin(), upds.end());
+      for (int i = 0; i < (int)upds.size(); ++i)
+        dsu.Undo();
+      for (auto& upd : upds) {
+        upd.type = 0;
+        dsu.Unite(upd.a, upd.b);
+      }
+      rem_a = upds.size();
+    }
+    while (upds.back().type == 1) {
+      tmp[1].push_back(upds.back());
+      dsu.Undo();
+      upds.pop_back();
+    }
+    int sz = (rem_a & (-rem_a));
+    for (int i = 0; i < sz; ++i) {
+      assert(upds.back().type == 0);
+      tmp[0].push_back(upds.back());
+      dsu.Undo();
+      upds.pop_back();
+    }
+    for (int z : {1, 0}) {
+      for (; tmp[z].size(); tmp[z].pop_back()) {
+        auto upd = tmp[z].back();
+        dsu.Unite(upd.a, upd.b);
+        upds.push_back(upd);
+      }
+    }
+    assert(upds.back().type == 0);
+    upds.pop_back();
+    dsu.Undo();
+    --rem_a;
+  };
+  auto push = [&](int a, int b) {
+    upds.push_back(Upd{1, a, b});
+    dsu.Unite(a, b);
+  };
+  
+  vector<int> dp(2 * m);
+  int lbound = 0;
+  for (int i = 0; i < 2 * m; ++i) {
+    auto [a, b] = edges[i % m];
+    while (!dsu.Try(a, b)) {
+      pop();
+      ++lbound;
+    }
+    push(a, b);
+    dp[i] = lbound;
+  }
+  
+  for (int i = 0; i < q; ++i) {
+    int a, b; cin >> a >> b; --a; --b;
+    if (dp[a + m - 1] <= b + 1) cout << "NO\n";
+    else cout << "YES\n";
+  }
+}
+\end{lstlisting}
+\end{minipage}
+
+\subsection{Sparse Table}
+\subsection{Disjoint Sparse Table}
+
+\textbf{Time Complexity (preprocessing): $O(N log N)$}\\
+\textbf{Time Complexity (query): $O(1)$}\\
+
+\begin{lstlisting}
+template <typename T>
+struct DisjointSparseTable {
+  vector<vector<T>> ys;
+  function<T(T, T)> f;
+  DisjointSparseTable(vector<T> xs, function<T(T, T)> f_) : f(f_) {
+    int n = 1;
+    while (n <= xs.size()) n *= 2;
+    xs.resize(n);
+    ys.push_back(xs);
+    for (int h = 1; ; ++h) {
+      int range = (2 << h), half = (range /= 2);
+      if (range > n) break;
+      ys.push_back(xs);
+      for (int i = half; i < n; i += range) {
+        for (int j = i-2; j >= i-half; --j) 
+          ys[h][j] = f(ys[h][j], ys[h][j+1]);
+        for (int j = i+1; j < min(n, i+half); ++j) 
+          ys[h][j] = f(ys[h][j-1], ys[h][j]);
+      }
+    }
+  }
+  T prod(int i, int j) { // [i, j) query
+    --j;             // __CHAR_BIT__ is usually 8
+    int h = sizeof(int)*__CHAR_BIT__-1-__builtin_clz(i ^ j);
+    return f(ys[h][i], ys[h][j]);
+  }
+};
+\end{lstlisting}
+
+\subsection{Fenwick Tree}
+\subsection{Segment Tree}
+\subsection{Sparse Lazy Segment Tree}
+\subsection{Persistent Segment Tree}
+
+\newpage
+
+\subsection{Persistent Fenwick Tree}
+
+\begin{lstlisting}
+struct PersistentFenwickTree {
+  struct change {
+    int data, id;
+    change(int d = 0, int i = 0) : data(d), id(i) { }
+    inline friend bool operator<(const change &a, const change &b){
+      return a.id < b.id;
+    }
+  };
+
+  int n, now = 0;
+  vector<vector<change>> tree;
+
+  PersistentFenwickTree(int n) {
+    tree.resize(n + 100);
+    this->n = n;
+    for (int i = 0; i <= n; i++) {
+      tree[i].push_back(change());
+    }
+  }
+  
+  void modify(int i, int x) {
+    for (i++; i <= n; i += i&(-i)) {
+      int new_data = max(tree[i].back().data, x);
+      tree[i].push_back(change(new_data, now));
+    }
+    now++;
+  }
+
+  int query(int i, int tree_id) {
+    int ans = 0;
+    vector<change>::iterator a;
+    for (i++; i; i -= i&(-i)){
+      a = upper_bound(tree[i].begin(), tree[i].end(), change(0, tree_id)) - 1;
+      ans = max(ans, a->data);
+    }
+    return ans;
+  }
+};
+\end{lstlisting}
+
+\newpage
+
+\subsection{2D Sparse Table}
+
+\cite{ShahjalalShohag2022Dec}
+
+\begin{lstlisting}
+// Watch out for memory limit
+// Sparse table's build and memory complexity are
+// O(N * M * log2(N) * log2(M))
+// Check for when M = N
+// Don't forget that you need to call the read and build function!
+struct SparseTable2D {
+    int LGN = 10, LGM = 10;
+    vector<int> lg1, lg2;
+    vector<vector<int>> a;
+    int N, M;
+
+    int* st_internal;
+
+    inline int& st(int x, int y, int a, int b) {
+        return st_internal[x * M * LGN * LGM + y * LGN * LGM + a * LGM + b];
+    }
+
+    SparseTable2D(int n, int m) {
+        N = n;
+        M = m;
+
+        LGN = log2(N) + 1;
+        LGM = log2(M) + 1;
+        
+        lg1.resize(N + 1);
+        lg2.resize(M + 1);
+
+        st_internal = new int[N * M * LGN * LGM + 10];
+        memset(st_internal, INT_MAX, sizeof st_internal);
+        // Don't forget to change INT_MAX if it's not a MIN query.
+    }
+
+    ~SparseTable2D() {
+        delete[] st_internal;
+    }
+
+    void read() {
+        a.resize(N, vector<int>(M, 0));
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < M; j++) {
+                cin >> a[i][j];
+            }
+        }
+    }
+
+    void build() {
+        for (int i = 2; i <= N; i++) lg1[i] = lg1[i >> 1] + 1;
+        for (int i = 2; i <= M; i++) lg2[i] = lg2[i >> 1] + 1;
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < M; j++) {
+                st(i, j, 0, 0) = a[i][j];
+            }
+        }
+        for (int a = 0; a < LGN; a++) {
+            for (int b = 0; b < LGM; b++) {
+                if (a + b == 0) continue;
+                for (int i = 0; i + (1 << a) <= N; i++) {
+                    for (int j = 0; j + (1 << b) <= M; j++) {
+                        if (!a) {
+                            st(i, j, a, b) = min(st(i, j, a, b - 1), st(i, j + (1 << (b - 1)), a, b - 1));
+                        } else {
+                            st(i, j, a, b) = min(st(i, j, a - 1, b), st(i + (1 << (a - 1)), j, a - 1, b));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    int query(int x1, int y1, int x2, int y2) {
+        x2++; y2++;
+        int a = lg1[x2 - x1], b = lg2[y2 - y1];
+        return min(
+                min(st(x1, y1, a, b), st(x2 - (1 << a), y1, a, b)),
+                min(st(x1, y2 - (1 << b), a, b), st(x2 - (1 << a), y2 - (1 << b), a, b))
+            );
+    };
+};
+\end{lstlisting}
+
+\subsection{2D Sparse Segment Tree}
+\subsection{K-th Minimum in Segment Tree}
+\subsection{Treap}
+\subsection{Indexed Binary Heap}
+\subsection{Persistent Array}
+\subsection{Sparse Bitset}
+\subsection{Interval Container}
+\subsection{Stream Median}
+
+TODO: Needs testing...
+
+\begin{lstlisting}
+template<typename T>
+struct Median {
+  priority_queue<T, vector<T>, greater<T>> right;
+  priority_queue<T, vector<T>, less<T>> left;
+  
+  T get() {
+    if (left.empty() && right.empty()) return -1;
+    if (left.empty()) return right.top();
+    if (right.empty()) return left.top();
+    if (left.size() == right.size()) return left.top();
+    return left.size() > right.size() ? left.top() : right.top();
+  }
+
+  void insert(T num) {
+    T median = get();
+    if (num < median) {
+      if (left.size() > right.size()) {
+        right.push(left.top());
+        left.pop();
+      }
+      left.push(num);
+    } else {
+      if (right.size() > left.size()) {
+        left.push(right.top());
+        right.pop();
+      }
+      right.push(num);
+    }
+  }
+};
+
+\end{lstlisting}
+
+\newpage
+
+\subsection{Palindromic Trie}
+
+\begin{center}
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+struct palindromic_tree {
+  vector<vector<int>> next;
+  vector<int> suf, len;
+  int new_node() {
+    next.push_back(vector<int>(256,-1));
+    suf.push_back(0);
+    len.push_back(0);
+    return next.size() - 1;
+  }
+  palindromic_tree(char *s) {
+    len[new_node()] = -1;
+    len[new_node()] =  0;
+    int t = 1; 
+    for (int i = 0; s[i]; ++i) {
+      int p = t;
+      for (; i-1-len[p] < 0 || 
+             s[i-1-len[p]] != s[i];
+             p = suf[p]);
+      
+      if ((t = next[p][s[i]]) >= 0) continue;
+      t = new_node();
+      len[t] = len[p] + 2;
+      next[p][s[i]] = t;
+      if (len[t] == 1) { 
+        suf[t] = 1; // EMPTY
+      } else {
+        p = suf[p];
+        for (; i-1-len[p] < 0 || s[i-1-len[p]] != s[i]; p = suf[p]);
+        suf[t] = next[p][s[i]];
+      }
+    }
+  }
+\end{lstlisting}
+\end{minipage}
+\qquad
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+  void display() {
+    vector<char> buf;
+    function<void (int, string)> rec =
+      [&](int p, string depth) {
+        if (len[p] > 0) {
+          cout << depth;
+          for (int i = buf.size()-1; i >= 0; --i)
+            cout << buf[i];
+          for (int i = len[p] % 2; i < buf.size(); ++i)
+            cout << buf[i];
+          cout << endl;
+        }
+        for (int a = 0; a < 256; ++a) {
+          if (next[p][a] >= 0) {
+            buf.push_back(a);
+            rec(next[p][a], depth + " ");
+            buf.pop_back();
+          }
+        }
+      };
+    
+    cout << "---" << endl;
+    rec(0, "");
+    cout << "---" << endl;
+    rec(1, "");
+  }
+};
+\end{lstlisting}
+\end{minipage}
+\end{center}
+
+\newpage
+
+\subsection{Eval-Link-Update Tree}
+
+\subsection{Euler Tour Tree}
+The Euler Tour Tree is a dynamic connectivity based data structure \cite{Henzinger1998Nov} \cite{Miltersen1994Aug} capable of the following operations in $O(log(N))$ time:
+
+{\setstretch{0.5}
+\lstset{basicstyle={\small\ttfamily}\ttfamily,style=smaller_code}
+\begin{itemize}
+  \item{\lstinline{make_node(x)} ... return singleton with value x}
+  \item{\lstinline{link(u,v)} ... add link between u and v}
+  \item{\lstinline{cut(uv)} ... remove edge uv}
+  \item{\lstinline{sum_in_component(u)} ... return sum of all values in the component}
+\end{itemize}
+}
+
+Note that when adding a link between $u$ and $v$, they can't be already in the same component.
+If the problem requires the sum of a component in a graph instead of a tree, we have explain
+how you can achieve this using the Dynamic Connectivity.
+\\
+\\
+The sum query can be interchanged with another query type
+as long as the operation is in a associative field.
+
+
+\begin{center}
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+struct euler_tour_tree {
+  struct node {
+    int x, s; // value, sum
+    node *ch[2], *p, *r;
+  };
+  int sum(node *t) { return t ? t->s : 0; }
+  node *update(node *t) {
+    if (t) t->s = t->x + sum(t->ch[0]) + sum(t->ch[1]);
+    return t;
+  }
+  int dir(node *t) { return t != t->p->ch[0]; }
+  void connect(node *p, node *t, int d) {
+    p->ch[d] = t; if (t) t->p = p;
+    update(p);
+  }
+  node *disconnect(node *t, int d) {
+    node *c = t->ch[d]; t->ch[d] = 0; if (c) c->p = 0; 
+    update(t);
+    return c;
+  }
+  void rot(node *t) {
+    node *p = t->p;
+    int d = dir(t); 
+    if (p->p) connect(p->p, t, dir(p));
+    else      t->p = p->p;
+    connect(p, t->ch[!d], d);
+    connect(t, p, !d);
+  }
+  void splay(node *t) {
+    for (; t->p; rot(t))
+      if (t->p->p) rot(dir(t) == dir(t->p) ? t->p : t);
+  }
+  void join(node *s, node *t) {
+    if (!s || !t) return;
+    for (; s->ch[1]; s = s->ch[1]); splay(s);
+    for (; t->ch[0]; t = t->ch[0]); connect(t, s, 0);
+  }
+\end{lstlisting}
+\end{minipage}
+\qquad
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+  node *make_node(int x, node *l = 0, node *r = 0) {
+    node *t = new node({x});
+    connect(t, l, 0); connect(t, r, 1);
+    return t;
+  }
+  node *link(node *u, node *v, int x = 0) {
+    splay(u); splay(v); 
+    node *uv = make_node(x, u, disconnect(v,1));
+    node *vu = make_node(0, v, disconnect(u,1));
+    uv->r = vu; vu->r = uv;
+    join(uv, vu);
+    return uv;
+  }
+  void cut(node *uv) {
+    splay(uv); disconnect(uv,1); splay(uv->r); 
+    join(disconnect(uv,0), disconnect(uv->r,1));
+    delete uv, uv->r;
+  }
+  int sum_in_component(node *u) {
+    splay(u);
+    return u->s;
+  }
+};
+\end{lstlisting}
+\end{minipage}
+\end{center}
+
+\newpage
+
+\subsection{Link-Cut Tree}
+
+The Link-Cut Tree is one of the most powerful tree data structures.
+It can support the following queries in amortized $O(log(n))$ time:
+
+{\setstretch{0.5}
+\lstset{basicstyle={\small\ttfamily}\ttfamily,style=smaller_code}
+\begin{itemize}
+  \item{\lstinline{link(u, v)} ... add an edge $(u, v)$}
+  \item{\lstinline{cut(u)} ... cut the edge $(parent[u], u)$}
+  \item{\lstinline{lca(u, v)} ... returns the least common ancestor of $u$ and $v$}
+  \item{\lstinline{connected(u, v)} ... checks if $u$ and $v$ are part of the same tree}
+  \item{\lstinline{find_root(u)} ... returns the root of $u$}
+  \item{\lstinline{component_size(u)} ... returns the size of the component containing $u$}
+  \item{\lstinline{subtree_size(u)} ... returns the subtree size of $u$}
+  \item{\lstinline{depth(u)} ... returns the depth of $u$}
+  \item{\lstinline{subtree_query(u, root)} ... subtree query with a given root}
+  \item{\lstinline{query(u, v)} ... path from $u$ to $v$ - sum query}
+  \item{\lstinline{update(u, x)} ... update the value of node $u$ to $x$}
+  \item{\lstinline{update(u, v, x)} ... update the path from $u$ to $v$ with $x$}
+\end{itemize}
+\lstset{basicstyle=\fontsize{7}{9}\ttfamily,style=smaller_code}
+}
+
+The following implementation includes lazy propagation which allows updating of paths.
+It is possible to change the sum function to any associative function.
+
+\begin{center}
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+struct node {
+  int p = 0, c[2] = {0, 0}, pp = 0;
+  bool flip = 0;
+  int sz = 0, ssz = 0, vsz = 0;
+  // sz  -> aux tree size
+  // ssz -> subtree size in rep tree
+  // vsz -> virtual tree size
+  long long val = 0, sum = 0, lazy = 0;
+  long long subsum = 0, vsum = 0;
+  node() {}
+  node(int x) {
+    val = x; sum = x;
+    sz = 1; lazy = 0;
+    ssz = 1; vsz = 0;
+    subsum = x; vsum = 0;
+  }
+};
+
+struct LCT {
+  vector<node> t;
+  LCT(int n) : t(n + 1) {}
+
+  // <independant splay tree code>
+  int dir(int x, int y) { return t[x].c[1] == y; }
+  void set(int x, int d, int y) {
+    if (x) t[x].c[d] = y, pull(x);
+    if (y) t[y].p = x;
+  }
+  void pull(int x) {
+    if (!x) return;
+    int &l = t[x].c[0], &r = t[x].c[1];
+    t[x].sum = t[l].sum + t[r].sum + t[x].val;
+    t[x].sz = t[l].sz + t[r].sz + 1;
+    t[x].ssz = t[l].ssz + t[r].ssz + t[x].vsz + 1;
+    t[x].subsum = t[l].subsum + t[r].subsum + t[x].vsum + t[x].val;
+  }
+  void push(int x) { 
+    if (!x) return;
+    int &l = t[x].c[0], &r = t[x].c[1];
+    if (t[x].flip) {
+      swap(l, r); 
+      if (l) t[l].flip ^= 1; 
+      if (r) t[r].flip ^= 1;
+      t[x].flip = 0;
+    }
+    if (t[x].lazy) {
+      t[x].val += t[x].lazy;
+      t[x].sum += t[x].lazy * t[x].sz;
+      t[x].subsum += t[x].lazy * t[x].ssz;
+      t[x].vsum += t[x].lazy * t[x].vsz;
+      if (l) t[l].lazy += t[x].lazy;
+      if (r) t[r].lazy += t[x].lazy;
+      t[x].lazy = 0;
+    }
+  }
+  void rotate(int x, int d) { 
+    int y = t[x].p, z = t[y].p, w = t[x].c[d];
+    swap(t[x].pp, t[y].pp);
+    set(y, !d, w);
+    set(x, d, y);
+    set(z, dir(z, y), x);
+  }
+  void splay(int x) { 
+    for (push(x); t[x].p;) {
+      int y = t[x].p, z = t[y].p;
+      push(z); push(y); push(x);
+      int dx = dir(y, x), dy = dir(z, y);
+      if (!z) rotate(x, !dx); 
+      else if (dx == dy) rotate(y, !dx), rotate(x, !dx); 
+      else rotate(x, dy), rotate(x, dx);
+    }
+  }
+  // </independant splay tree code>
+\end{lstlisting}
+\end{minipage}
+\qquad
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+  // making it a root in the rep. tree
+  void make_root(int u) {
+    access(u);
+    int l = t[u].c[0];
+    t[l].flip ^= 1;
+    swap(t[l].p, t[l].pp);
+    t[u].vsz += t[l].ssz;
+    t[u].vsum += t[l].subsum;
+    set(u, 0, 0);
+  }
+  // make the path from root to u a preferred path
+  // returns last path-parent of a node as it moves up the tree
+  int access(int _u) {
+    int last = _u;
+    for (int v = 0, u = _u; u; u = t[v = u].pp) {
+      splay(u); splay(v);
+      t[u].vsz -= t[v].ssz;
+      t[u].vsum -= t[v].subsum;
+      int r = t[u].c[1];
+      t[u].vsz += t[r].ssz;
+      t[u].vsum += t[r].subsum;
+      t[v].pp = 0;
+      swap(t[r].p, t[r].pp);
+      set(u, 1, v);
+      last = u;
+    }
+    splay(_u);
+    return last;
+  }
+\end{lstlisting}
+\end{minipage}
+\end{center}
+  
+\begin{center}
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+void link(int u, int v) { // u -> v
+  // assert(!connected(u, v));
+  make_root(v);
+  access(u); splay(u);
+  t[v].pp = u;
+  t[u].vsz += t[v].ssz;
+  t[u].vsum += t[v].subsum;
+}
+// cut par[u] -> u, u is non root vertex
+void cut(int u) {
+  access(u);
+  assert(t[u].c[0] != 0);
+  t[t[u].c[0]].p = 0;
+  t[u].c[0] = 0;
+  pull(u);
+}
+// parent of u in the rep. tree
+int get_parent(int u) {
+  access(u); splay(u); push(u);
+  u = t[u].c[0]; push(u);
+  while (t[u].c[1]) {
+    u = t[u].c[1]; push(u);
+  }
+  splay(u);
+  return u;
+}
+// root of the rep. tree containing this node
+int find_root(int u) {
+  access(u); splay(u); push(u);
+  while (t[u].c[0]) {
+    u = t[u].c[0]; push(u);
+  }
+  splay(u);
+  return u;
+}
+bool connected(int u, int v) {
+  return find_root(u) == find_root(v);
+}
+// depth in the rep. tree
+int depth(int u) {
+  access(u); splay(u);
+  return t[u].sz;
+}
+int lca(int u, int v) {
+  // assert(connected(u, v));
+  if (u == v) return u;
+  if (depth(u) > depth(v)) swap(u, v);
+  access(v); 
+  return access(u);
+}
+int is_root(int u) {
+  return get_parent(u) == 0;
+}
+\end{lstlisting}
+\end{minipage}
+\qquad
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+int component_size(int u) {
+  return t[find_root(u)].ssz;
+}
+int subtree_size(int u) {
+  int p = get_parent(u);
+  if (p == 0) {
+    return component_size(u);
+  }
+  cut(u);
+  int ans = component_size(u);
+  link(p, u);
+  return ans;
+}
+long long component_sum(int u) {
+  return t[find_root(u)].subsum;
+}
+long long subtree_sum(int u) {
+  int p = get_parent(u);
+  if (p == 0) {
+    return component_sum(u);
+  }
+  cut(u);
+  long long ans = component_sum(u);
+  link(p, u);
+  return ans;
+}
+// sum of the subtree of u when root is specified
+long long subtree_query(int u, int root) {
+  int cur = find_root(u);
+  make_root(root);
+  long long ans = subtree_sum(u);
+  make_root(cur);
+  return ans;
+}
+// path sum
+long long query(int u, int v) {
+  int cur = find_root(u);
+  make_root(u); access(v);
+  long long ans = t[v].sum;
+  make_root(cur);
+  return ans;
+}
+void update(int u, int x) {
+  access(u); splay(u);
+  t[u].val += x;
+}
+// add x to the nodes on the path from u to v
+void update(int u, int v, int x) {
+  int cur = find_root(u);
+  make_root(u); access(v);
+  t[v].lazy += x;
+  make_root(cur);
+}
+\end{lstlisting}
+\end{minipage}
+\end{center}
+
+\textbf{Example Problems}
+
+\begin{problem}
+  \textbf{- SPOJ - Dynamic Tree Connectivity} \cite{SPOJ_DYNACON1}
+\end{problem}
+
+\lstset{basicstyle={\small\ttfamily}\ttfamily,style=smaller_code}
+\begin{problem}
+  \textbf{- CODECHEF - Query on a tree VI} \cite{QTREE6}
+
+  Given a tree, all the nodes are black initially. There are two types of queries:
+\end{problem}
+\begin{itemize}
+  \item {\lstinline{Query 1}: How many nodes are connected to $u$, such that two nodes are connected iff all of the nodes on the path from $u$ to $v$ have the same color.}
+  \item {\lstinline{Query 2}: Toggle the color of $u$.}
+\end{itemize}
+\lstset{basicstyle=\fontsize{7}{9}\ttfamily,style=smaller_code}

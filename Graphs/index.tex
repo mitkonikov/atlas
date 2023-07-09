@@ -1,0 +1,1525 @@
+For every graph algorithm, the nodes will be numbered from $0$ to $N-1$. \newline
+When talking about time complexity, we will interchangeably use $N$ as the number of vertices
+in a graph and $M$ as the number of edges.
+Some of the algorithms, for shorter code use the following template:
+
+\begin{lstlisting}
+#define rep(i, a, b) for(int i = a; i < (b); ++i)
+#define all(c) ((c).begin()), ((c).end())
+#define sz(x) (int)(x).size()
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+\end{lstlisting}
+
+\subsection{Topological Sort}
+
+\textbf{Time Complexity: $O(N)$}
+\\
+
+Given adjacency list of the graph, the following DFS creates a topological order of the graph nodes:
+
+\begin{center}
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+vector<bool> visited;
+vector<int> sorted;
+
+void dfs(int v) {
+    visited[v] = true;
+    for (auto u: adj[v]) {
+        if (!visited[u]) {
+            dfs(u);
+        }
+    }
+
+    sorted.push_back(v);
+}
+\end{lstlisting}
+\end{minipage}
+\qquad
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+  void sort() {
+    for (int i = 0; i < n; i++) {
+        if (!visited[i]) dfs(i);
+    }
+
+    reverse(
+      sorted.begin(),
+      sorted.end()
+    );
+}
+\end{lstlisting}
+\end{minipage}
+\end{center}
+
+\newpage
+\subsubsection{Consistent Topological Sort}
+
+\textbf{Time Complexity: $O(N)$}
+\\
+
+If we have multiple components, this algorithm can jump
+between components due to the order of the nodes. Thus, we can extend this algorithm, 
+by classifying the nodes by components and performing topological sort on each component separately.
+
+\lstset{basicstyle=\fontsize{8}{10}\ttfamily,style=smaller_code}
+\begin{center}
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+vector<vector<int>> adj;
+vector<vector<int>> tree_adj;
+
+// All vectors should be resized to size N
+vector<int> visited; // Topological Sort
+vector<int> sorted;  // Output
+vector<bool> visited_comp;
+vector<vector<int>> comps;
+
+void dfs_comp(int u, int p, int c) {
+    comps[c].push_back(u);
+    visited_comp[u] = true;
+    for (auto v: tree_adj[u]) {
+        if (v == p || visited_comp[v]) continue;
+        dfs_comp(v, u, c);
+    }
+}
+\end{lstlisting}
+\end{minipage}
+\qquad
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+void sort() {
+  // Classify the nodes by
+  // the component they are in.
+  // Time Complexity is still O(N)
+  int comp_id = 0;
+  for (int i = 0; i < n; i++) {
+      if (visited_comp[i]) continue;
+      dfs_comp(i, -1, comp_id);
+      comp_id++;
+  }
+
+  for (int i = 0; i < comp_id; i++) {
+      for (auto u: comps[i]) {
+          if (visited[u]) continue;
+          // This is the same function
+          // as in the ordinary Topo-Sort.
+          dfs(u);
+      }
+  }
+
+  // You may want to reverse
+  // each component separately
+  reverse(sorted.begin(), sorted.end());
+}
+\end{lstlisting}
+\end{minipage}
+\end{center}
+\lstset{basicstyle={\small\ttfamily}\ttfamily,style=smaller_code}
+
+\newpage
+
+\subsection{Euler Tour}
+
+In graph theory, an Euler Tour is a tour in a graph
+that visits every edge exactly once 
+(allowing for revisiting vertices). 
+Similarly, an Eulerian circuit or Eulerian cycle is an 
+Eulerian tour that starts and ends on the same vertex.
+\newline
+\newline
+Let us denote an undirected connected graph as $UCG$ and directed connected graph as $DCG$.
+Then the following properties hold:
+\begin{itemize}
+\item{An $UCG$ has an Eulerian cycle iff $deg(v) \equiv 0$ (mod 2), $\forall v \in V$}
+\item{An $UCG$ can be decomposed into edge-disjoint cycles iff has an Eulerian cycle.}
+\item{An $UCG$ has an Eulerian trail iff exactly zero or two vertices have odd degree.}
+\item{A $DCG$ has an Eulerian cycle iff $deg_{in}(v) = deg_{out}(v), \forall v \in V$, and all of its vertices with nonzero degree belong to a single strongly connected component.}
+\item{A $DCG$ has an Eulerian trail iff at most one vertex has $deg_{out}(v) - deg_{in}(v) = 1$, for every other vertex holds $deg_{in}(v) = deg_{out}(v)$, and all of its vertices with nonzero degree belong to a single connected component of the underlying undirected graph.}
+\end{itemize}
+The following algorithm finds an Euler Cycle or Tour if there exists.
+Otherwise, it returns an empty vector.
+Input should be a vector of (dest, global edge index), where
+for undirected graphs, forward/backward edges have the same index.
+\newline
+\newline
+\textbf{Time Complexity: $O(N)$}\\
+\textbf{Implementation: Simon Lindholm}
+
+\begin{lstlisting}
+vi eulerWalk(vector<vector<pii>>& gr, int nedges, int src=0) {
+	int n = sz(gr);
+	vi D(n), its(n), eu(nedges), ret, s = {src};
+	D[src]++; // to allow Euler paths, not just cycles
+	while (!s.empty()) {
+		int x = s.back(), y, e, &it = its[x], end = sz(gr[x]);
+		if (it == end){ ret.push_back(x); s.pop_back(); continue; }
+		tie(y, e) = gr[x][it++];
+		if (!eu[e]) {
+			D[x]--, D[y]++;
+			eu[e] = 1; s.push_back(y);
+      // To get edge indices back, add .second to s and ret.
+		}}
+	for (int x : D) if (x < 0 || sz(ret) != nedges+1) return {};
+	return {ret.rbegin(), ret.rend()};
+}
+\end{lstlisting}
+
+An example of how the adjacency list has to look like.
+In this case we have an undirected graph.
+\begin{lstlisting}
+for (int i = 0; i < m; i++) {
+  int u, v; cin >> u >> v; u--; v--;
+  adj[u].emplace_back(v, i);
+  adj[v].emplace_back(u, i);
+}
+\end{lstlisting}
+
+\newpage
+
+\subsection{Cycles}
+\textbf{Time Complexity: $O(N)$}\\\\
+We can ask the following question about a $DCG$:
+\\
+ - How many nodes are a part of any cycle?
+\\
+\\
+This problem can be answered in $O(N)$ time by performing a DFS and
+keeping track for each node whether or not it's on the current stack in our DFS.
+If the node is on the stack and we have hit it again, then we know we have reached a cycle.
+When exiting the DFS we update all of the "parent" nodes with this information.
+
+\begin{lstlisting}
+vector<vector<int>> adj; // directed graph
+vector<bool> recStack, visited, is_cycle;
+
+bool dfs(int u) {
+    recStack[u] = visited[u] = true;
+    for (auto v: adj[u]) {
+        if (is_cycle[v] || (!visited[v] && dfs(v)) || recStack[v]) {
+            // If you don't need to reset the recursion stack
+            // you won't need to check is_cycle[v]
+            recStack[u] = false;
+            return is_cycle[v] = true;
+        }
+    }
+
+    recStack[u] = false;
+    return false;
+}
+
+// In the main function, call dfs() for each node
+for (int i = 0; i < n; i++) {
+    if (!visited[i] && dfs(i)) {
+        is_cycle[i] = true;
+    }
+}
+\end{lstlisting}
+
+\newpage
+
+\subsection{Bipartite Checker}
+\textbf{Time Complexity: $O(N)$}\\
+
+This BFS-based algorithm checks if a given graph is bipartite.
+It finds out a bipartite coloring as well.
+
+\begin{remark}
+  If the graph is not connected, you will need to call this function
+separately on each component, while making the color array global
+to avoid square complexity.
+\end{remark}
+
+\begin{lstlisting}
+vector<vector<int>> adj;
+vector<int> color;
+
+bool isBipartite() {
+    color.resize((int)adj.size(), -1);
+    color[0] = 1;
+ 
+    queue<int> q;
+    q.push(0);
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+ 
+        for (auto v: adj[u]) {
+            if (v == u) return false;
+            if (color[v] == -1) {
+                color[v] = 1 - color[u];
+                q.push(v);
+            } else if (color[v] == color[u]) {
+                return false;
+            }
+        }
+    }
+ 
+    return true;
+}
+\end{lstlisting}
+
+\newpage
+\subsection{2SAT}
+
+\subsection{Articulation Points}
+
+\textbf{Time Complexity: $O(N + M)$}\\
+\textbf{Space Complexity: $O(N)$}\\
+
+If you remove an articulation point (cut vertex) in a graph,
+the graph will split into more components than originally.
+They represent vulnerabilities in a connected network.
+The following implementation \cite{CutPointsCPAlgo}
+calls the \lstinline{process()} function when each articulation
+point is found. 
+
+\begin{lstlisting}
+vector<vector<int>> adj; // adjacency list of graph
+
+vector<bool> visited;
+vector<int> tin, low;
+int timer = 0;
+void process(int v) {
+    // v is articulation point and process it
+    // if v is cut down => the graph will be disconnected
+}
+void dfs(int v, int p = -1) {
+    visited[v] = true;
+    tin[v] = low[v] = timer++;
+    int children = 0;
+    for (int to : adj[v]) {
+        if (to == p) continue;
+        if (visited[to]) {
+            low[v] = min(low[v], tin[to]);
+        } else {
+            dfs(to, v);
+            low[v] = min(low[v], low[to]);
+            if (low[to] >= tin[v] && p!=-1)
+                process(v);
+            ++children;
+        }
+    }
+    if(p == -1 && children > 1)
+        process(v);
+}
+void find_cutpoints() {
+    visited.assign(n, false);
+    tin.assign(n, -1);
+    low.assign(n, -1);
+    for (int i = 0; i < n; ++i) {
+        if (!visited[i]) dfs (i);
+    }
+}
+\end{lstlisting}
+
+\newpage
+
+\subsection{Bridges}
+
+\textbf{Time Complexity: $O(N + M)$}\\
+\textbf{Space Complexity: $O(N)$}\\
+
+Bridges are very similar to Articulation Points in a graph, except
+that bridges are edges for which it holds that their removal increases the number
+of connected components. The following implementation \cite{CutPointsCF}
+finds bridges and articulation points with one DFS.
+\\
+
+\begin{lstlisting}
+// adj[u] = adjacent nodes of u
+// ap = articulation points (output)
+// p = parent
+// disc[u] = discovery time of u
+// low[u] = 'low' node of u
+
+int timer = 0;
+
+int dfs(int u, int p) {
+  int children = 0;
+  low[u] = disc[u] = ++timer;
+  for (int& v : adj[u]) {
+    // we don't want to go back through the same path.
+    // if we go back is because we found another way back
+    if (v == p) continue;
+    if (!disc[v]) { // if V has not been discovered before
+      children++;
+      dfs(v, u);
+      if (disc[u] <= low[v])
+        ap[u] = 1;
+      low[u] = min(low[u], low[v]);
+      // low[v] might be an ancestor of u
+    } else
+      // if v was already discovered means
+      // that we found an ancestor
+      // => finds the ancestor with the least discovery time
+      low[u] = min(low[u], disc[v]);
+  }
+  return children;
+}
+
+void solve() {
+  ap = low = disc = vector<int>(adj.size());
+  for (int u = 0; u < adj.size(); u++)
+    if (!disc[u])
+      ap[u] = dfs(u, u) > 1;
+}
+\end{lstlisting}
+
+\textbf{Example Problems}
+
+\begin{problem}
+  \textbf{- Street Directions (UVa)} \cite{BridgesStreetDirections}
+
+  Given an undirected graph. Find a directed configuration of
+  the same graph such that you convert as many
+  undirected edges to directed edges as possible and
+  the graph will still remain strongly connected.
+\end{problem}
+
+\newpage
+
+\subsection{Maximum Matchings}
+\subsubsection{Unweighted Bipartite Graphs}
+\textbf{Time Complexity: $O(M\sqrt{N})$}\\
+\textbf{Space Complexity: $O(M + N)$}\\
+
+If we know that an unweighted graph is bipartite, we can solve the maximum matching problem
+fairly easy with the Hopcroft-Karp algorithm. \cite{Hopcroft2006Jul}
+The algorithm takes an adjacency list as an input and 
+produces a maximum cardinality matching as output
+in the \lstinline{match} vector i.e. 
+the matched node for each node is written
+in the \lstinline{match} vector.
+
+
+\begin{center}
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+vector<vector<int>> adj;
+vector<int> match;
+vector<int> dist;
+bool bfs() {
+  queue<int> q;
+  fill(dist.begin(), dist.end(), -1);
+  for (int i = 0; i < n; i++) {
+    if (match[i] == -1) {
+      q.push(i);
+      dist[i] = 0;
+    }
+  }
+  bool reached = false;
+  while (!q.empty()) {
+    int u = q.front();
+    q.pop();
+    for (int v : adj[u]) {
+      if (match[v] == -1) reached = true;
+      else if (dist[match[v]] == -1) {
+        dist[match[v]] = dist[u] + 1;
+        q.push(match[v]);
+      }
+    }
+  }
+  return reached;
+}
+\end{lstlisting}
+\end{minipage}
+\qquad
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+bool dfs(int u) {
+  if (u == -1) return true;
+  for (int v : adj[u]) {
+    if (match[v] == -1 || 
+        dist[match[v]] == dist[u] + 1) {
+          if (dfs(match[v])) {
+            match[v] = u, match[u] = v;
+            return true;
+          }
+    }
+  }
+  return false;
+}
+
+int hopcroft_karp() {
+  fill(match.begin(), match.end(), -1);
+  int matching = 0;
+  while (bfs()) {
+    for (int i = 0; i < n; i++)
+      if (match[i] == -1 && dfs(i))
+        matching++;
+  }
+  return matching;
+}
+\end{lstlisting}
+\end{minipage}
+\end{center}
+
+\textbf{Implementation: Eric K. Zhang}
+
+\begin{remark}
+  The knights' graph in a chessboard is a bipartite graph.
+\end{remark}
+
+\textbf{Example Problems}
+
+\begin{problem}
+  \textbf{- Fast Maximum Matching (SPOJ)} \cite{SPOJ_MATCHING}
+
+  There are $N \leq 5 \cdot 10^4$ cows and $M \leq 5 \cdot 10^4$ bulls.
+  There are also $P \leq 1.5 \cdot 10^5$ compatible (cow, bull) pairs.
+  Find the maximum number of (cow, bull) matches we can do.
+\end{problem}
+
+\begin{problem}
+  \textbf{- Gambit (CODEFU)} \cite{CodeFuGambit}
+
+  There is a $N \times M$ chessboard with some squares which are occupied.
+  Find the maximum number of knights you can place on non-occupied squares, so no two of them
+  attack each other.
+\end{problem}
+
+\subsubsection{Kőnig's theorem}
+A \textbf{minimum node cover} of a graph is a minimum set of nodes such that each
+edge of the graph has at least one endpoint in the set. In a general graph, finding
+a minimum node cover is a NP-hard problem. However, if the graph is bipartite,
+Kőnig's theorem tells us that the size of a minimum node cover and the size
+of a maximum matching are always equal. The nodes that do not belong to a minimum
+node cover form a \textbf{maximum independent set}.
+
+\subsubsection{Weighted Bipartite Graphs}
+In weighted bipartite graphs, the matching problem 
+can be solved with the Hungarian Algorithm or 
+reduced to a Min Cost Max Flow problem where one of the bipartite sets
+is connected to $s$ via $1$ capacity, $0$ cost edges and the other
+set is connected with $t$ via $1$ capacity, $0$ cost edges.
+All of the other edges between the two sets should have $1$ capacity with their original cost.
+
+\newpage
+\subsubsection{Max Flow - Edmonds-Karp}
+
+\textbf{Worst-Case Time Complexity: $O(NM^2)$}\\
+\textbf{In practice it's much faster.}\\
+\textbf{Space Complexity: $O(N^2)$}\\
+
+Edmonds-Karp algorithm for finding a maximum flow in a graph uses
+consecutive BFS runs to fill up the network with flow.
+
+\lstset{basicstyle=\fontsize{7}{9}\ttfamily,style=smaller_code}
+
+\begin{center}
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+class MaxFlow {
+  public:
+    int n;
+    vector<vector<int>> adj;
+    // stores the residual flow
+    vector<vector<int>> capacity;
+    // stores the forward flow
+    vector<vector<int>> flows;
+    // stores the edges direction
+    vector<vector<bool>> direction;
+
+    struct Flow {
+        int node;
+        int flow;
+    };
+
+    MaxFlow(int n) {
+        this->n = n;
+        this->adj.resize(n, vector<int>());
+        this->capacity.resize(n, vector<int>(n, 0));
+        this->direction.resize(n, vector<bool>(n, 0));
+        this->flows.resize(n, vector<int>(n, 0));
+    }
+
+    int bfs(int source, int sink, vector<int>& parent) {
+        fill(parent.begin(), parent.end(), -1);
+        parent[source] = -2; // NULL value
+        queue<Flow> q;
+        q.push({ source, INT_MAX });
+
+        while(!q.empty()) {
+            int currentNode = q.front().node;
+            int flow = q.front().flow;
+            q.pop();
+
+            for (int nextNode: adj[currentNode]) {
+                if (parent[nextNode] == -1 &&
+                    capacity[currentNode][nextNode] > 0) {
+                    parent[nextNode] = currentNode;
+                    int new_flow = min(flow, capacity[currentNode][nextNode]);
+                    if (nextNode == sink) return new_flow;
+                    q.push({ nextNode, new_flow });
+                    assert(new_flow != INT_MAX);
+                }
+            }
+        }
+
+        return 0;
+    }
+\end{lstlisting}
+\end{minipage}
+\qquad
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+    int getMaxFlow(int source, int sink) {
+        int flow = 0;
+        vector<int> parent(n);
+        int new_flow;
+
+        while (new_flow = bfs(source, sink, parent)) {
+            flow += new_flow;
+            int current = sink;
+            while (current != source) {
+                int prev = parent[current];
+                flows[prev][current] += new_flow;
+                flows[current][prev] -= new_flow;
+                capacity[prev][current] -= new_flow;
+                capacity[current][prev] += new_flow;
+                current = prev; // go back
+            }
+        }
+
+        return flow;
+    };
+
+    map<pair<int, int>, int> getEdges() {
+        // edge (u, v) mapped to flow
+        map<pair<int, int>, int> result;
+        for (int i = 0; i < (int)adj.size(); i++) {
+            for (int j = 0; j < (int)adj[i].size(); j++) {
+                int nextNode = adj[i][j];
+                if (flows[i][nextNode] > 0 && direction[i][nextNode]) {
+                    result[{ i, nextNode }] = flows[i][nextNode];
+                }
+            }
+        }
+
+        return result;
+    }
+};
+\end{lstlisting}
+\end{minipage}
+\end{center}
+\lstset{basicstyle={\small\ttfamily}\ttfamily,style=smaller_code}
+
+\newpage
+
+\lstset{basicstyle=\fontsize{7}{9}\ttfamily,style=smaller_code}
+\subsubsection{Max Flow - Push-Relabel}
+
+\textbf{Worst-Case Time Complexity: $O(N^2\sqrt{M})$}\\
+\textbf{In practice it's much faster.}\\
+\textbf{Space Complexity: $O(N^2)$}\\
+\textbf{Implementation: Simon Lindholm}
+\begin{center}
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+struct PushRelabel {
+  struct Edge {
+    int dest, back;
+    ll f, c;
+  };
+  vector<vector<Edge>> g;
+  vector<ll> ec;
+  vector<Edge*> cur;
+  vector<vi> hs; vi H;
+  PushRelabel(int n) :
+    g(n), ec(n), cur(n), hs(2*n), H(n) {}
+
+  void addEdge(int s, int t, ll cap, ll rcap=0) {
+    if (s == t) return;
+    g[s].push_back({t, sz(g[t]), 0, cap});
+    g[t].push_back({s, sz(g[s])-1, 0, rcap});
+  }
+
+  void addFlow(Edge& e, ll f) {
+    Edge &back = g[e.dest][e.back];
+    if (!ec[e.dest] && f) hs[H[e.dest]].push_back(e.dest);
+    e.f += f; e.c -= f; ec[e.dest] += f;
+    back.f -= f; back.c += f; ec[back.dest] -= f;
+  }
+\end{lstlisting}
+\end{minipage}
+\qquad
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+	ll calc(int s, int t) {
+		int v = sz(g); H[s] = v; ec[t] = 1;
+		vi co(2*v); co[0] = v-1;
+		rep(i,0,v) cur[i] = g[i].data();
+		for (Edge& e : g[s]) addFlow(e, e.c);
+
+		for (int hi = 0;;) {
+			while (hs[hi].empty()) if (!hi--) return -ec[s];
+			int u = hs[hi].back(); hs[hi].pop_back();
+			while (ec[u] > 0)  // discharge u
+				if (cur[u] == g[u].data() + sz(g[u])) {
+					H[u] = 1e9;
+					for (Edge& e : g[u]) if (e.c && H[u] > H[e.dest]+1)
+						H[u] = H[e.dest]+1, cur[u] = &e;
+					if (++co[H[u]], !--co[hi] && hi < v)
+						rep(i,0,v) if (hi < H[i] && H[i] < v)
+							--co[H[i]], H[i] = v + 1;
+					hi = H[u];
+				} else if (cur[u]->c && H[u] == H[cur[u]->dest]+1)
+					addFlow(*cur[u], min(ec[u], cur[u]->c));
+				else ++cur[u];
+		}
+	}
+	bool leftOfMinCut(int a) { return H[a] >= sz(g); }
+}
+\end{lstlisting}
+\end{minipage}
+\end{center}
+
+\newpage
+
+\subsubsection{Max Flow - Capacity Scaling}
+\subsubsection{Min Cost Max Flow}
+
+The cost of the flow is defined as:
+\begin{center}
+  $\displaystyle c(F) = \sum_{e \in E}^{} flow(e) \cdot cost(e)$
+\end{center}
+
+Duplicate or antiparallel edges with different costs are allowed, but \textbf{negative cycles are not allowed.}
+
+\begin{center}
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+template<int V, class T=long long>
+class mcmf {
+  const T INF = numeric_limits<T>::max();
+
+  struct edge {
+    int t, rev;
+    T cap, cost, f;
+  };
+
+  vector<edge> adj[V];
+  T dist[V];
+  int pre[V];
+  bool vis[V];
+
+  // void spfa(int s) {};
+
+  priority_queue<pair<T, int>, vector<pair<T, int> >,
+    greater<pair<T, int> > > pq; /* for dijkstra */
+
+  void dijkstra(int s) {
+    memset(pre, -1, sizeof pre);
+    memset(vis, 0, sizeof vis);
+    fill(dist, dist + V, INF);
+
+    dist[s] = 0;
+    pq.emplace(0, s);
+    while (!pq.empty()) {
+      int v = pq.top().second;
+      pq.pop();
+      if (vis[v]) continue;
+      vis[v] = true;
+      for (auto e : adj[v]) if (e.cap != e.f) {
+        int u = e.t;
+        T d = dist[v] + e.cost;
+        if (d < dist[u]) {
+          dist[u] = d, pre[u] = e.rev;
+          pq.emplace(d, u);
+        }
+      }
+    }
+  }
+
+  void reweight() {
+    for (int v = 0; v < V; v++)
+      for (auto& e : adj[v])
+        e.cost += dist[v] - dist[e.t];
+  }
+\end{lstlisting}
+\end{minipage}
+\qquad
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+public:
+  void add(int u, int v, T cap=1, T cost=0) {
+    adj[u].push_back({ v, (int) adj[v].size(), cap, cost, 0 });
+    adj[v].push_back({ u, (int) adj[u].size() - 1, 0, -cost, 0 });
+  }
+
+  pair<T, T> calc(int s, int t) {
+    spfa(s); /* comment out if all costs are non-negative */
+    T totalflow = 0, totalcost = 0;
+    T fcost = dist[t];
+    while (true) {
+      reweight();
+      dijkstra(s);
+      if (~pre[t]) {
+        fcost += dist[t];
+        T flow = INF;
+        for (int v = t; ~pre[v]; v = adj[v][pre[v]].t) {
+          edge& r = adj[v][pre[v]];
+          edge& e = adj[r.t][r.rev];
+          flow = min(flow, e.cap - e.f);
+        }
+        for (int v = t; ~pre[v]; v = adj[v][pre[v]].t) {
+          edge& r = adj[v][pre[v]];
+          edge& e = adj[r.t][r.rev];
+          e.f += flow;
+          r.f -= flow;
+        }
+        totalflow += flow;
+        totalcost += flow * fcost;
+      }
+      else break;
+    }
+    return { totalflow, totalcost };
+  }
+
+  void clear() {
+    for (int i = 0; i < V; i++) {
+      adj[i].clear();
+      dist[i] = pre[i] = vis[i] = 0;
+    }
+  }
+};
+\end{lstlisting}
+\end{minipage}
+\end{center}
+
+\newpage
+
+If the costs can be negative, we need to use shortest path finding algorithm which can handle
+negative costs. The Shortest Path Faster Algorithm is an improvement of the Bellman-Ford algorithm.
+The worst-case running time of the algorithm is $\displaystyle O(|V|\cdot |E|)$, 
+just like the standard Bellman-Ford algorithm. 
+Experiments suggest that the average running time is $\displaystyle O(|E|)$, 
+and indeed this is true on random graphs, but it is possible to construct sparse graphs
+where SPFA runs in time $\displaystyle \Omega (|V|\cdot |E|)$
+like the usual Bellman-Ford algorithm.
+
+\begin{lstlisting}
+void spfa(int s) {
+  list<int> q;
+
+  memset(pre, -1, sizeof pre);
+  memset(vis, 0, sizeof vis);
+  fill(dist, dist + V, INF);
+
+  dist[s] = 0;
+  q.push_back(s);
+  while (!q.empty()) {
+    int v = q.front();
+    q.pop_front();
+    vis[v] = false;
+    for (auto e : adj[v]) if (e.cap != e.f) {
+      int u = e.t;
+      T d = dist[v] + e.cost;
+      if (d < dist[u]) {
+        dist[u] = d, pre[u] = e.rev;
+        if (!vis[u]) {
+          if (q.size() && d < dist[q.front()]) q.push_front(u);
+          else q.push_back(u);
+          vis[u] = true;
+        }
+      }
+    }
+  }
+}
+\end{lstlisting}
+
+\newpage
+
+\subsubsection{Maximum Matching in General Graphs}
+
+\textbf{Time Complexity: $O(NM\log{N})$}\\
+
+\cite{Gabow1976Apr}
+
+\begin{center}
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+struct BlossomAlgorithm {
+  int n;
+  vector<vector<int>> adj;
+  BlossomAlgorithm(int n) : n(n), adj(n){};
+  void addEdge(int u, int v) {
+      adj[u].push_back(v);
+      adj[v].push_back(u);
+  }
+
+  vector<int> mate;
+  int maximumMatching() {
+      mate.assign(n + 1, n);
+      vector<int> first(n + 1, n), que(n);
+      vector<pair<int, int>> label
+        (n + 1, make_pair(-1, -1));
+      int head = 0, tail = 0;
+      function<void(int, int)> rematch = [&](int v, int w) {
+          int t = mate[v];
+          mate[v] = w;
+          if (mate[t] != v) return;
+          if (label[v].snd == -1) {
+              mate[t] = label[v].fst;
+              rematch(mate[t], t);
+          } else {
+              int x, y;
+              tie(x, y) = label[v];
+              rematch(x, y);
+              rematch(y, x);
+          }
+      };
+      auto relabel = [&](int x, int y) {
+          function<int(int)> findFirst = [&](int u) {
+              return label[first[u]].fst < 0
+                ? first[u]
+                : first[u] = findFirst(first[u]);
+          };
+          int r = findFirst(x), s = findFirst(y);
+          if (r == s) return;
+          auto h = make_pair(~x, y);
+          label[r] = label[s] = h;
+          int join;
+          while (1) {
+              if (s != n) swap(r, s);
+              r = findFirst(label[mate[r]].fst);
+              if (label[r] == h) {
+                  join = r;
+                  break;
+              } else {
+                  label[r] = h;
+              }
+          }
+          for (int v : {first[x], first[y]}) {
+              for (; v != join; v = first[label[mate[v]].fst]) {
+                  label[v] = make_pair(x, y);
+                  first[v] = join;
+                  que[tail++] = v;
+              }
+          }
+      };
+\end{lstlisting}
+\end{minipage}
+\qquad
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+    auto augment = [&](int u) {
+        label[u] = make_pair(n, -1);
+        first[u] = n;
+        head = tail = 0;
+        for (que[tail++] = u; head < tail;) {
+            int x = que[head++];
+            for (int y : adj[x]) {
+                if (mate[y] == n && y != u) {
+                    mate[y] = x;
+                    rematch(x, y);
+                    return true;
+                } else if (label[y].fst >= 0) {
+                    relabel(x, y);
+                } else if (label[mate[y]].fst == -1) {
+                    label[mate[y]].fst = x;
+                    first[mate[y]] = y;
+                    que[tail++] = mate[y];
+                }
+            }
+        }
+        return false;
+    };
+    int matching = 0;
+    for (int u = 0; u < n; ++u) {
+        if (mate[u] < n || !augment(u)) continue;
+        ++matching;
+        for (int i = 0; i < tail; ++i)
+            label[que[i]] = label[mate[que[i]]] = make_pair(-1, -1);
+        label[n] = make_pair(-1, -1);
+    }
+    return matching;
+  }
+};
+\end{lstlisting}
+
+\begin{problem}
+  \textbf{- Ada and Bloom (SPOJ)} \cite{SPOJ_ADABLOOM}
+\end{problem}
+\end{minipage}
+\end{center}
+
+
+\newpage
+
+\subsubsection{Stable Marriage Problem}
+
+\begin{lstlisting}
+vector<int> stable_matching(vector<vector<int>> prefer_m, vector<vector<int>> prefer_w) {
+  int n = prefer_m.size();
+  vector<int> pair_m(n, -1);
+  vector<int> pair_w(n, -1);
+  vector<int> p(n);
+  for (int i = 0; i < n; i++) {
+    while (pair_m[i] < 0) {
+      int w = prefer_m[i][p[i]++];
+      int m = pair_w[w];
+      if (m == -1) {
+        pair_m[i] = w;
+        pair_w[w] = i;
+      } else if (prefer_w[w][i] < prefer_w[w][m]) {
+        pair_m[m] = -1;
+        pair_m[i] = w;
+        pair_w[w] = i;
+        i = m;
+      }
+    }
+  }
+  return pair_m;
+}
+
+int main() {
+  vector<vector<int>> prefer_m{{0, 1, 2}, {0, 2, 1}, {1, 0, 2}};
+  vector<vector<int>> prefer_w{{0, 1, 2}, {2, 0, 1}, {2, 1, 0}};
+
+  vector<int> matching = stable_matching(prefer_m, prefer_w);
+  for (int x : matching) cout << x << " ";
+}
+\end{lstlisting}
+
+\subsubsection{Stable Roommate Problem}
+
+Not verified ... Implementation: Mitko Nikov
+
+\begin{lstlisting}
+struct StableRoommateProblem {
+    // N lists of N - 1 preferences
+    vector<vector<int>> p;
+    vector<int> proposed, accepted;
+
+    // This is not guaranteed to be O(N^2)
+    // To achieve O(N^2), the preference lists have to be actual lists
+    // It's O(N^3) at max... But in practice it would be a lot faster.
+    bool solve() {
+        int N = p.size();
+        proposed.resize(N, -1);
+        accepted.resize(N, -1);
+
+        auto wouldBreak = [&](int me, int pref) {
+            int he = accepted[pref];
+            assert(he != -1);
+            // am I better than him?
+            int he_index = find(p[pref].begin(), p[pref].end(), he) - p[pref].begin();
+            int me_index = find(p[pref].begin(), p[pref].end(), me) - p[pref].begin();
+            return me_index < he_index;
+        };
+
+        auto reject = [&](int me, int pref) {
+            auto me_iter = find(p[pref].begin(), p[pref].end(), me);
+            if (me_iter != p[pref].end()) p[pref].erase(me_iter);
+            
+            auto pref_iter = find(p[me].begin(), p[me].end(), pref);
+            if (pref_iter != p[me].end()) p[me].erase(pref_iter);
+        };
+
+
+
+        // Phase 1
+        vector<int> q(N); int id = 0;
+        iota(q.begin(), q.end(), 0);
+        while (id < q.size()) {
+            int me = q[id];
+            if (p[me].size() == 0) break;
+            int preferred = p[me][0];
+
+            if (accepted[preferred] == -1) { // The preferred is free
+                proposed[me] = preferred;
+                accepted[preferred] = me;
+                id++;
+            } else if (wouldBreak(me, preferred)) {
+                // The preferred is willing to break up with his accepted
+                proposed[me] = preferred;
+                int oldAC = accepted[preferred];
+                accepted[preferred] = me;
+                reject(preferred, oldAC);
+                q[id] = oldAC;
+            } else {
+                reject(me, preferred);
+            }
+        }
+
+        auto index = [&](int me, int who) {
+            auto it = find(p[me].begin(), p[me].end(), who);
+            if (it == p[me].end()) return -1;
+            return (int)(it - p[me].begin());
+        };
+
+        // Phase 2
+        for (int i = 0; i < N; i++) {
+            int idAC = index(i, accepted[i]);
+            if (idAC == -1) continue;
+            vector<int> to_remove(p[i].begin() + idAC + 1, p[i].end());
+            for (auto j: to_remove) {
+                reject(i, j);
+            }
+        }
+        auto rotation = [&](int me) {
+            vector<int> P, Q;
+            map<int, int> first;
+            while (true) {
+                if (first.count(me)) { // cycle!
+                    P.push_back(me);
+                    for (int i = first[me] + 1; i < P.size(); i++) {
+                        reject(P[i], Q[i-1]);
+                    }
+                    break;
+                }
+                P.push_back(me);
+                Q.push_back(p[me][1]);
+                first[me] = P.size() - 1;
+                me = p[p[me][1]].back();
+            }
+            return true;
+        };
+        auto check = [&]() { // Check if there are valid preferences
+            bool ok = true;
+            for (int i = 0; i < N; i++) ok &= !p[i].empty();
+            return ok;
+        };
+        // Phase 3
+        for (int me = 0; me < N; me++) {
+            if (p[me].size() == 1) continue;
+            if (!rotation(me)) return false;
+            if (!check()) return false;
+            me = -1; // reset from the start
+        }
+      return true;
+    }
+};
+
+// INPUT:            OUTPUT:
+// 6                 YES
+// C D B F E         0 5
+// F E D A C         1 3
+// B D E A F         2 4
+// E B C F A         3 1
+// C A B D F         4 2
+// E A C D B         5 0
+
+int main() {
+    int N;
+    cin >> N;
+    StableRoommateProblem SRP;
+    SRP.p.resize(N, vector<int>(N - 1));
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N - 1; j++) {
+            char ch; cin >> ch;
+            SRP.p[i][j] = ch - 'A';
+        }
+    }
+    auto ok = SRP.solve();
+    cout << (ok ? "YES" : "NO") << endl;
+    for (int i = 0; ok && i < N; i++) {
+        cout << i << " " << SRP.p[i][0] << endl;
+    }
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Global Minimum Cut}
+
+A global minimum cut of an undirected graph  is a cut of minimum size. 
+The term global here is meant to connote that 
+any cut of the graph is allowed - there is no source or sink.
+Thus the global min-cut is a natural “robustness” parameter.
+It is the smallest number of edges whose deletion
+disconnects the graph.
+
+\textbf{Time Complexity: $O(N^3)$}\\
+\textbf{Implementation: Simon Lindholm}
+
+% TODO: Check this code.
+\begin{lstlisting}
+pair<int, vi> globalMinCut(vector<vi> mat) {
+	pair<int, vi> best = {INT_MAX, {}};
+	int n = sz(mat);
+	vector<vi> co(n);
+	rep(i,0,n) co[i] = {i};
+	rep(ph,1,n) {
+		vi w = mat[0];
+		size_t s = 0, t = 0;
+		rep(it,0,n-ph) { // O(V^2) -> O(E log V) with prio. queue
+			w[t] = INT_MIN;
+			s = t, t = max_element(all(w)) - w.begin();
+			rep(i,0,n) w[i] += mat[t][i];
+		}
+		best = min(best, {w[t] - mat[t][t], co[t]});
+		co[s].insert(co[s].end(), all(co[t]));
+		rep(i,0,n) mat[s][i] += mat[t][i];
+		rep(i,0,n) mat[i][s] = mat[s][i];
+		mat[0][t] = INT_MIN;
+	}
+	return best;
+}
+\end{lstlisting}
+
+\newpage
+
+\subsection{Strongly Connected Components}
+
+\textbf{Time Complexity: $O(N+M)$}\\
+
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+struct TarjanSCC {
+  int N;
+  vector<vector<int>> adj;
+  vector<int> scc, in, low;
+  stack<int> s;
+  vector<bool> inStack;
+  int scc_num = 0, timer = 0;
+  
+  TarjanSCC(int N) {
+    this->N = N;
+    scc.resize(N, -1);
+    in.resize(N, -1);
+    low.resize(N);
+    inStack.resize(N, false);
+  }
+
+  // In the scc vector are
+  // the IDs of the components for each node
+  void run() {
+    for (int i = 0; i < N; i++)
+      if (scc[i] == -1) dfs(i);
+  }
+\end{lstlisting}
+\end{minipage}
+\qquad
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+  void dfs(int n) {
+    low[n] = in[n] = timer++;
+    s.push(n);
+    inStack[n] = true;
+    for (int m : adj[n]) {
+      if (in[m] == -1) {
+        dfs(m);
+        low[n] = min(low[n], low[m]);
+      } else if (inStack[m]) {
+        low[n] = min(low[n], in[m]);
+      }
+    }
+    
+    if (low[n] == in[n]) {
+      while (true) {
+        int u = s.top();
+        s.pop();
+        scc[u] = scc_num;
+        inStack[u] = false;
+        if (u == n) break;
+      }
+      ++scc_num;
+    }
+  }
+};
+\end{lstlisting}
+\end{minipage}
+
+\newpage
+
+\subsection{Dynamic Connectivity}
+
+The Dynamic Connectivity Problem \cite{CodeForces_Blog_DynamicConnectivity} revolves around the idea that we will have a dynamically changing graph and we are asked at some points of time, whether some nodes are connected, or about the number of connected components and similar queries.
+This problem is really difficult, but we will offer a very fast offline solution for general graphs. Furthermore, in the section about trees, we will talk about solving this problem on trees, but with a very fast amortized online solution.
+
+The idea behind solving such a problem is realizing that we can build a special segment tree type of data-structure on the queries as our leafs.
+Each query defines a unit of time. We can imagine that each edge will exist/live from time $T_i$ to time $T_j$.
+So each edge contributes only in this range. When traversing the tree, we can book-keep the components i.e. their connectivity in a DSU data-structure.
+One thing we need to be able to do, is to rollback the changes on the DSU when we backtrack with the DFS or when we get to the point where we need to remove an edge.
+
+\subsection{Dynamic Reachability for DAG}
+
+It is a data structure that admits the following operations:
+{\setstretch{0.5}
+\lstset{basicstyle={\small\ttfamily}\ttfamily,style=smaller_code}
+\begin{itemize}
+  \item{\lstinline{add_edge(s, t)} ... insert edge $(s,t)$ to the network if it does not make a cycle}
+  \item{\lstinline{is_reachable(s, t)} ... return true iff there is a path there is a path from $s$ to $t$}
+\end{itemize}
+\lstset{basicstyle=\fontsize{7}{9}\ttfamily,style=smaller_code}
+}
+
+We maintain reachability trees $T(u)$ for all $u$ in $V$.
+Then $is_reachable(s, t)$ is solved by checking $t \in T(u)$.
+For $add_edge(s, t)$, if $is_reachable(s, t)$ or $is_reachable(t, s)$ then
+no update is performed. Otherwise, we meld $T(s)$ and $T(t)$.
+
+
+\textbf{Time Complexity (update): Amortized $O(N)$}\\
+\textbf{Time Complexity (query): $O(1)$}\\
+
+\begin{lstlisting}
+struct dag_reachability {
+  int n;
+  vector<vector<int>> parent;
+  vector<vector<vector<int>>> child;
+  dag_reachability(int n)
+      : n(n),
+        parent(n, vector<int>(n, -1)),
+        child(n, vector<vector<int>>(n)) {}
+  bool is_reachable(int src, int dst) {
+      return src == dst || parent[src][dst] >= 0;
+  }
+  bool add_edge(int src, int dst) {
+      if (is_reachable(dst, src)) return false;  // break DAG condition
+      if (is_reachable(src, dst)) return true;   // no-modification performed
+      for (int p = 0; p < n; ++p)
+          if (is_reachable(p, src) && !is_reachable(p, dst))
+              meld(p, dst, src, dst);
+      return true;
+  }
+  void meld(int root, int sub, int u, int v) {
+      parent[root][v] = u;
+      child[root][u].push_back(v);
+      for (int c : child[sub][v])
+          if (!is_reachable(root, c)) meld(root, sub, v, c);
+  }
+};
+\end{lstlisting}
+
+\newpage
+
+\subsection{Minimum Cost Arborescence}
+
+\textbf{Time Complexity: $O(NM)$}\\
+
+Let $G = (V, E)$ be a weighted directed graph.
+For a vertex $r$, an edge-set $T$ is called $r$-arborescense if
+\begin{itemize}
+  \item $T$ is a spanning tree (with forgetting directions),
+  \item for each $u$ in $V$, $indeg_T(u) \leq 1$, $indeg_T(r) = 0$.
+\end{itemize}
+The program finds the minimum weight of $r$-arborescence.
+
+Algorithm:
+Chu-Liu/Edmonds' recursive shrinking.
+At first, it finds a minimum incomming edge for each $v$ in $V$.
+Then, if it forms a arborescence, it is a solution,
+and otherwise, it contracts a cycle and iterates the procedure.
+
+\begin{lstlisting}
+  const int INF = 1e9 + 1000;
+  struct graph {
+      int n;
+      graph(int n) : n(n) {}
+      struct edge {
+          int src, dst;
+          int weight;
+      };
+      vector<edge> edges;
+      void add_edge(int u, int v, int w) { edges.push_back({u, v, w}); }
+      int arborescence(int r) {
+          int N = n;
+          for (int res = 0;;) {
+              vector<edge> in(N, {-1, -1, (int)INF});
+              vector<int> C(N, -1);
+              for (auto e : edges)  // cheapest comming edges
+                  if (in[e.dst].weight > e.weight) in[e.dst] = e;
+              in[r] = {r, r, 0};
+  
+              for (int u = 0; u < N; ++u) {  // no comming edge ==> no aborescense
+                  if (in[u].src < 0) return -1;
+                  res += in[u].weight;
+              }
+              vector<int> mark(N, -1);  // contract cycles
+              int index = 0;
+              for (int i = 0; i < N; ++i) {
+                  if (mark[i] != -1) continue;
+                  int u = i;
+                  while (mark[u] == -1) {
+                      mark[u] = i;
+                      u = in[u].src;
+                  }
+                  if (mark[u] != i || u == r) continue;
+                  for (int v = in[u].src; u != v; v = in[v].src) C[v] = index;
+                  C[u] = index++;
+              }
+              if (index == 0) return res;  // found arborescence
+              for (int i = 0; i < N; ++i)  // contract
+                  if (C[i] == -1) C[i] = index++;
+  
+              vector<edge> next;
+              for (auto &e : edges)
+                  if (C[e.src] != C[e.dst] && C[e.dst] != C[r])
+                      next.push_back(
+                          {C[e.src], C[e.dst], e.weight - in[e.dst].weight});
+              edges.swap(next);
+              N = index;
+              r = C[r];
+          }
+      }
+  };
+\end{lstlisting}
+
+\newpage
+
+\subsection{Minimum Mean Cycle}
+
+\textbf{Time Complexity: $O(NM)$}\\
+\textbf{Space Complexity: $O(N^2)$}\\
+
+Given a directed graph $G = (V, E)$ with edge weight $w(e), \forall e \in E$.
+\newline
+Find a minimum mean cycle $C$, i.e., $min \frac{w(C)}{|C|} \}$.
+\newline
+\newline
+Karp's Algorithm \cite{Karp1978Jan} starts by fixing some vertex $s$. 
+Using dynamic programming, we can compute
+the shortest path from $s$ to every possible $v$, with "exactly" $k$ edges.
+We write $d(s,u;k)$ for this value.
+Then, we can show that
+
+\begin{center}
+  $\displaystyle \min_{u \in V} { \max_{k \in [|V|]} { \frac{d(s,u;n) - d(s,u;k)}{n-k} } }$
+\end{center}
+
+is the length of minimum mean cycle.
+
+\begin{proof}
+Note that $d(s,u;n)$ consists of a cycle and a path.
+Subtract the path from $s$ to $u$, we obtain a length of cycle.
+\end{proof}
+
+\begin{remark}
+For an undirected graph, the minimum mean cycle problem can be solved by
+b-matching/T-join. See Korte and Vygen, Ch. 12.
+\end{remark}
+
+
+\begin{center}
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+struct graph {
+  typedef int weight_type;
+  const weight_type INF = 99999999;
+  struct edge {
+    int src, dst;
+    weight_type weight;
+  };
+  int n;
+  vector<vector<edge>> adj;
+  graph(int n) : n(n), adj(n) { }
+  void add_edge(int src, int dst, weight_type weight) {
+    adj[src].push_back({src, dst, weight}); 
+  }
+\end{lstlisting}
+\end{minipage}
+\qquad
+\begin{minipage}[t]{0.45\linewidth}
+\begin{lstlisting}
+  typedef pair<weight_type, int> fraction;
+  fraction min_mean_cycle() {
+    vector<vector<weight_type>> dist(n+1, vector<weight_type>(n));
+    vector<vector<int>> prev(n+1, vector<int>(n, -1));
+    fill(all(prev[0]), 0);
+
+    for (int k = 0; k < n; ++k) {
+      for (int u = 0; u < n; ++u) {
+        if (prev[k][u] < 0) continue;
+        for (auto e: adj[u]) {
+          if (prev[k+1][e.dst] < 0 ||
+              dist[k+1][e.dst] > dist[k][e.src] + e.weight) {
+            dist[k+1][e.dst] = dist[k][e.src] + e.weight;
+            prev[k+1][e.dst] = e.src;
+          }
+        }
+      }
+    }
+    int v = -1;
+    fraction opt = {1, 0}; // +infty
+    for (int u = 0; u < n; ++u) {
+      fraction f = {-1, 0}; // -infty
+      for (int k = n-1; k >= 0; --k) {
+        if (prev[k][u] < 0) continue;
+        fraction g = {dist[n][u] - dist[k][u], n - k};
+        if (f.fst * g.snd < f.snd * g.fst) f = g;
+      }
+      if (opt.fst * f.snd > f.fst * opt.snd) { opt = f; v = u; }
+    }
+    if (v >= 0) { // found a loop
+      vector<int> p; // path
+      for (int k = n; p.size() < 2 || p[0] != p.back(); v = prev[k--][v]) 
+        p.push_back(v);
+      reverse(all(p));
+    }
+    return opt; 
+  }
+};
+\end{lstlisting}
+\end{minipage}
+\end{center}
+
+\newpage
+\subsection{Max Cut}
+
+\subsection{Max Clique}
+
+\begin{lstlisting}
+#define vb vector<bitset<101>>
+struct Maxclique {
+	double limit = 0.025, pk = 0;
+	struct Vertex { int i, d = 0; };
+	typedef vector<Vertex> vv;
+	vb e;
+	vv V;
+	vector<vector<int>> C;
+	vector<int> qmax, q, S, old;
+	
+  void init(vv& r) {
+		for (auto& v : r) v.d = 0;
+		for (auto& v : r) for (auto j : r) v.d += e[v.i][j.i];
+		sort(all(r), [](auto a, auto b) { return a.d > b.d; });
+
+    // maximum_color(vertex)
+		int mxD = r[0].d;
+		for (int i = 0; i < r.size(); i++) r[i].d = min(i, mxD) + 1;
+  }
+	
+  void expand(vv& R, int lev = 1) {
+		S[lev] += S[lev - 1] - old[lev];
+		old[lev] = S[lev - 1];
+		while (sz(R)) {
+			if (sz(q) + R.back().d <= sz(qmax)) return;
+			q.push_back(R.back().i);
+			vv T;
+			for(auto v:R) if (e[R.back().i][v.i]) T.push_back({v.i});
+			if (sz(T)) {
+				if (S[lev]++ / ++pk < limit) init(T);
+				int j = 0, mxk = 1, mnk = max(sz(qmax) - sz(q) + 1, 1);
+				C[1].clear(), C[2].clear();
+				for (auto v : T) {
+					int k = 1;
+					auto f = [&](int i) { return e[v.i][i]; };
+					while (any_of(all(C[k]), f)) k++;
+					if (k > mxk) mxk = k, C[mxk + 1].clear();
+					if (k < mnk) T[j++].i = v.i;
+					C[k].push_back(v.i);
+				}
+				if (j > 0) T[j - 1].d = 0;
+				for (int k = mnk; k < mxk + 1; ++k) for (int i : C[k])
+					T[j].i = i, T[j++].d = k;
+				expand(T, lev + 1);
+			} else if (sz(q) > sz(qmax)) qmax = q;
+			q.pop_back(), R.pop_back();
+		}
+	}
+
+	vector<int> maxClique() { init(V), expand(V); return qmax; }
+
+	Maxclique(vb conn) : e(conn), C(sz(e)+1), S(sz(C)), old(S) {
+		for (int i = 0; i < e.size(); i++) V.push_back({i});
+	}
+};
+
+\end{lstlisting}
+
+\subsection{Chromatic Number}

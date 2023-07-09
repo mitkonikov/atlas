@@ -1,0 +1,142 @@
+\documentclass{article}
+
+
+% NOTES:
+% 
+%   https://atcoder.jp/contests/abc222/editorial/2749
+%   E Sum of Geometric Progression in O(log(N))
+% 
+
+% TO PRINT:
+% Kirhov's Theorem
+% Picks Theorem for Polygon area
+
+
+\usepackage{listings}
+\usepackage{color}
+\usepackage{multicol}
+\usepackage{hyperref}
+\usepackage{setspace}
+\usepackage{amssymb}
+\usepackage[margin=1in]{geometry}
+\usepackage{import}
+
+\hypersetup{
+    colorlinks,
+    citecolor=black,
+    filecolor=black,
+    linkcolor=black,
+    urlcolor=black
+}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=c++,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+\lstdefinestyle{smaller_code}{
+  language=c++,
+}
+
+\title{\textbf{Competitive Programming Library}}
+% \author{	\vspace{20pt}Mitko Nikov}
+\date{\today}
+\author{}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proof}{Proof}
+\newtheorem{remark}{Remark}
+\newtheorem{problem}{Problem}
+\begin{document}
+
+\maketitle
+
+\newpage
+
+\vspace*{\fill}
+\begin{center}
+  Intentionally left blank.
+\end{center}
+\vspace*{\fill}
+
+\newpage
+
+\tableofcontents
+
+\newpage
+
+\section{Graphs}
+
+\import{./Graphs}{index.tex}
+
+\newpage
+
+\section{Trees}
+
+\import{./Trees}{index.tex}
+
+\newpage
+
+\section{Algorithms}
+
+\import{./Algorithms}{index.tex}
+
+\newpage
+
+\section{String Algorithms}
+
+\import{./Strings}{index.tex}
+
+\newpage
+
+\section{Data Structures}
+
+\import{./Data Structures}{index.tex}
+
+\newpage
+
+\section{Maths}
+
+\import{./Maths}{index.tex}
+
+\newpage
+
+\section{Hashing}
+
+\import{./Hashing}{index.tex}
+
+\newpage
+
+\section{Geometry}
+
+\import{./Geometry}{index.tex}
+
+\newpage
+
+\section{Miscellaneous Stuff}
+
+\import{./Misc}{index.tex}
+
+\newpage
+\section{References}
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\end{document}

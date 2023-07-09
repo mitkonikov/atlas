@@ -1,0 +1,495 @@
+\subsection{Basic Algorithms}
+
+\subsubsection{Binary Exponentiation}
+
+\subsubsection{Sum of Geometric Progression}
+
+Given integers $A$, $N$ and $M$, find $\displaystyle \sum_{i=0}^{N-1} A^i$, mod $M$.
+
+\begin{lstlisting}
+int geometric(int N, int A, int M) {
+  ll T = 1;
+  ll E = A % M;
+  ll total = 0;
+  while (N > 0) {
+    if (N & 1) {
+      total = (E * total + T) % M;
+    }
+    T = ((E + 1) * T) % M;
+    E = (E * E) % M;
+    N = N / 2;
+  }
+  return total;
+}
+\end{lstlisting}
+
+\subsection{Primes}
+
+\subsubsection{Carmichael Lambda (Universal Totient Function)}
+
+$\lambda(n)$ is a smallest number that satisfies $a^{\lambda(n)} \equiv 1$ (mod $n$)
+for all $a$ coprime with $n$. This is also known as an universal totien tunction $\psi(n)$.
+
+Complexity:
+\lstset{basicstyle={\small\ttfamily}\ttfamily,style=smaller_code}
+\begin{itemize}
+  \item \lstinline{carmichael_lambda(n)} ... $O(\sqrt{n})$ by trial division.
+  \item \lstinline{carmichael_lambda(lo,hi)} ... $O((H-L) loglog(H))$ by prime sieve.
+\end{itemize}
+\lstset{basicstyle=\fontsize{7}{9}\ttfamily,style=smaller_code}
+
+\textit{Note.} Required GCD and LCM.
+
+\begin{lstlisting}
+ll carmichael_lambda(ll n) {
+  ll lambda = 1;
+  if (n % 8 == 0) n /= 2;
+  for (ll d = 2; d*d <= n; ++d) {
+    if (n % d == 0) {
+      n /= d;
+      ll y = d - 1;
+      while (n % d == 0) {
+        n /= d;
+        y *= d;
+      }
+      lambda = lcm(lambda, y);
+    }
+  }
+  if (n > 1) lambda = lcm(lambda, n-1);
+  return lambda;
+}
+\end{lstlisting}
+\newpage
+\begin{lstlisting}
+  vector<ll> primes(ll lo, ll hi) { // primes in [lo, hi)
+  const ll M = 1 << 14, SQR = 1 << 16;
+  vector<bool> composite(M), small_composite(SQR);
+
+  vector<pair<ll,ll>> sieve; 
+  for (ll i = 3; i < SQR; i+=2) {
+    if (!small_composite[i]) {
+      ll k = i*i + 2*i*max(0.0, ceil((lo - i*i)/(2.0*i)));
+      sieve.push_back({2*i, k});
+      for (ll j = i*i; j < SQR; j += 2*i) 
+        small_composite[j] = 1;
+    }
+  }
+  vector<ll> ps; 
+  if (lo <= 2) { ps.push_back(2); lo = 3; }
+  for (ll k = lo|1, low = lo; low < hi; low += M) {
+    ll high = min(low + M, hi);
+    fill(all(composite), 0);
+    for (auto &z: sieve) 
+      for (; z.snd < high; z.snd += z.fst)
+        composite[z.snd - low] = 1;
+    for (; k < high; k+=2) 
+      if (!composite[k - low]) ps.push_back(k);
+  }
+  return ps;
+}
+vector<ll> primes(ll n) { // primes in [0,n)
+  return primes(0,n);
+}
+vector<ll> carmichael_lambda(ll lo, ll hi) { // lambda(n) for all n in [lo, hi)
+  vector<ll> ps = primes(sqrt(hi)+1);
+  vector<ll> res(hi-lo), lambda(hi-lo, 1);
+  iota(all(res), lo);
+
+  for (ll k = ((lo+7)/8)*8; k < hi; k += 8) res[k-lo] /= 2;
+  for (ll p: ps) {
+    for (ll k = ((lo+(p-1))/p)*p; k < hi; k += p) {
+      if (res[k-lo] < p) continue;
+      ll t = p - 1;
+      res[k-lo] /= p;
+      while (res[k-lo] > 1 && res[k-lo] % p == 0) {
+        t *= p;
+        res[k-lo] /= p; 
+      }
+      lambda[k-lo] = lcm(lambda[k-lo], t);
+    }
+  }
+  for (ll k = lo; k < hi; ++k) {
+    if (res[k-lo] > 1) 
+      lambda[k-lo] = lcm(lambda[k-lo], res[k-lo]-1);
+  }
+  return lambda; // lambda[k-lo] = lambda(k)
+}
+\end{lstlisting}
+
+\newpage
+\subsection{Modular Arithmetic}
+
+\begin{center}
+\begin{minipage}[t]{0.45\linewidth}
+\subsubsection{Discrete Log}
+
+The following function returns any $x$ such that $a^x \equiv b$ $(mod$ $m)$ in $O(\sqrt{m})$ time.
+It returns $-1$ if such $x$ can not be found. \cite{DiscreteLogCPAlgo}
+  
+\begin{lstlisting}
+int solve(int a, int b, int m) {
+  // This reduction step is not needed
+  // If a and m are relatively prime.
+  a %= m, b %= m;
+  int k = 1, add = 0, g;
+  while ((g = gcd(a, m)) > 1) {
+    if (b == k)
+      return add;
+    if (b % g)
+      return -1;
+    b /= g, m /= g, ++add;
+    k = (k * 1ll * a / g) % m;
+  }
+
+  // Here the algorithm starts
+  int n = sqrt(m) + 1;
+  int an = 1;
+  for (int i = 0; i < n; ++i)
+    an = (an * 1ll * a) % m;
+
+  unordered_map<int, int> vals;
+  for (int q = 0, cur = b; q <= n; ++q) {
+    vals[cur] = q;
+    cur = (cur * 1ll * a) % m;
+  }
+
+  // if the gcd(a, m) = 1
+  //   => cur = 1 AND add = 0
+  for (int p = 1, cur = k; p <= n; ++p) {
+    cur = (cur * 1ll * an) % m;
+    if (vals.count(cur)) {
+      int ans = n * p - vals[cur] + add;
+      return ans;
+    }
+  }
+  return -1;
+}
+\end{lstlisting}
+\end{minipage}
+\qquad
+\begin{minipage}[t]{0.45\linewidth}
+\subsubsection{Discrete Root}
+
+The problem of finding a discrete root is defined as follows.
+Given a prime $n$ and two integers and $a$, $k$, find all $x$ for which:
+$x^k \equiv a$ $(mod$ $n)$ \cite{DiscreteRootCPAlgo}
+
+Required functions:
+{\setstretch{0.5}
+% \lstset{basicstyle={\small\ttfamily}\ttfamily,style=smaller_code}
+\begin{itemize}
+  \item{\lstinline{powmod(a, x, m)} ... $a^x$ $(mod$ $m)$ in $O(log(n))$}
+  \item{\lstinline{gcd(a, b)} ... GCD of $a$ and $b$}
+  \item{\lstinline{primitive_root(m)} ... The primitive root of $m$}
+\end{itemize}
+% \lstset{basicstyle=\fontsize{7}{9}\ttfamily,style=smaller_code}
+}
+
+\begin{lstlisting}
+// Find all integers x such that x^k = a (mod n)
+void solve(int n, int k, int a) {
+  if (a == 0) {
+    puts("1\n0");
+    return;
+  }
+
+  int g = primitive_root(n);
+
+  // Baby-step giant-step discrete logarithm algorithm
+  int sq = (int) sqrt (n + .0) + 1;
+  vector<pair<int, int>> dec(sq);
+  for (int i = 1; i <= sq; ++i)
+    dec[i-1] = {powmod(g, i * sq * k % (n - 1), n), i};
+  sort(dec.begin(), dec.end());
+  int any_ans = -1;
+  for (int i = 0; i < sq; ++i) {
+    int my = powmod(g, i * k % (n - 1), n) * a % n;
+    auto it = lower_bound(dec.begin(), dec.end(), make_pair(my, 0));
+    if (it != dec.end() && it->first == my) {
+      any_ans = it->second * sq - i;
+      break;
+    }
+  }
+  if (any_ans == -1) {
+    puts("0");
+    return;
+  }
+
+  // Print all possible answers
+  int delta = (n-1) / gcd(k, n-1);
+  vector<int> ans;
+  for (int cur = any_ans % delta; cur < n-1; cur += delta)
+    ans.push_back(powmod(g, cur, n));
+  sort(ans.begin(), ans.end());
+  printf("%d\n", ans.size());
+  for (int answer : ans)
+    printf("%d ", answer);
+}
+
+\end{lstlisting}
+\end{minipage}
+\end{center}
+
+\newpage
+
+\begin{center}
+\begin{minipage}[t]{0.45\linewidth}
+\subsubsection{Primitive Root}
+
+\begin{lstlisting}
+// Finds the primitive root modulo p
+int primitive_root(int p) {
+  vector<int> fact;
+  int phi = p-1, n = phi;
+  for (int i = 2; i * i <= n; ++i) {
+    if (n % i == 0) {
+      fact.push_back(i);
+      while (n % i == 0)
+        n /= i;
+    }
+  }
+  if (n > 1)
+    fact.push_back(n);
+
+  for (int res = 2; res <= p; ++res) {
+    bool ok = true;
+    for (int factor : fact) {
+      if (powmod(res, phi / factor, p) == 1) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) return res;
+  }
+  return -1;
+}
+\end{lstlisting}
+\end{minipage}
+\qquad
+\begin{minipage}[t]{0.45\linewidth}
+\subsubsection{Factorial Mod Linear P}
+
+\begin{lstlisting}
+int factmod(int n, int p) {
+  // Precompute in O(p)
+  vector<int> f(p);
+  f[0] = 1;
+  for (int i = 1; i < p; i++)
+    f[i] = f[i-1] * i % p;
+
+  // Answer in O(log(n))
+  int res = 1;
+  while (n > 1) {
+    if ((n/p) % 2)
+      res = p - res;
+    res = res * f[n%p] % p;
+    n /= p;
+  }
+  return res;
+}
+\end{lstlisting}
+
+\subsubsection{Legendre's Formula}
+
+The exponent of $p$ in the prime factorization \cite{FactorialModP_CPAlgo} of $n!$ is:
+
+\begin{center}
+  $\displaystyle \nu_p(n!) = \sum_{i=1}^{\infty} \left\lfloor \frac{n}{p^i} \right\rfloor$
+\end{center}
+
+\begin{lstlisting}
+int multiplicity_factorial(int n, int p) {
+  int count = 0;
+  do { n /= p; count += n; } while (n);
+  return count;
+}
+\end{lstlisting}
+\end{minipage}
+\end{center}
+
+\newpage
+
+\subsubsection{ModInt Structure}
+
+\begin{lstlisting}
+const int mod=998244353;
+struct mi {
+    int v;
+    mi(){v=0;}
+    mi(ll _v){v=int(-mod<=_v&&_v<mod?_v:_v%mod); if(v<0)v+=mod;}
+    explicit operator int()const{return v;}
+    friend bool operator==(const mi &a,const mi &b){return (a.v==b.v);}
+    friend bool operator!=(const mi &a,const mi &b){return (a.v!=b.v);}
+    friend bool operator<(const mi &a,const mi &b){return (a.v<b.v);}
+    mi& operator+=(const mi &m){if((v+=m.v)>=mod)v-=mod; return *this;}
+    mi& operator-=(const mi &m){if((v-=m.v)<0)v+=mod; return *this;}
+    mi& operator*=(const mi &m){v=((ll)(v)*m.v)%mod; return *this;}
+    mi& operator/=(const mi &m){return (*this)*=inv(m);}
+    friend mi pow(mi a,ll e){mi r=1; for(;e;a*=a,e/=2)if(e&1)r*=a; return r;}
+    friend mi inv(mi a){return pow(a,mod-2);}
+    mi operator-()const{return mi(-v);}
+    mi& operator++(){return (*this)+=1;}
+    mi& operator--(){return (*this)-=1;}
+    friend mi operator++(mi &a,int){mi t=a; ++a; return t;}
+    friend mi operator--(mi &a,int){mi t=a; --a; return t;}
+    friend mi operator+(mi a,const mi &b){return a+=b;}
+    friend mi operator-(mi a,const mi &b){return a-=b;}
+    friend mi operator*(mi a,const mi &b){return a*=b;}
+    friend mi operator/(mi a,const mi &b){return a/=b;}
+    friend istream& operator>>(istream &is,mi &m){ll _v; is >> _v; m=mi(_v); return is;}
+    friend ostream& operator<<(ostream &os,const mi &m){os << m.v; return os;}
+};
+\end{lstlisting}
+
+\subsection{Binomial Coefficient}
+
+Precomputing binomial coefficients in $O(N^2)$.
+\begin{lstlisting}
+const int maxn = ...;
+int C[maxn + 1][maxn + 1];
+C[0][0] = 1;
+for (int n = 1; n <= maxn; ++n) {
+    C[n][0] = C[n][n] = 1;
+    for (int k = 1; k < n; ++k)
+        C[n][k] = C[n - 1][k - 1] + C[n - 1][k];
+}
+\end{lstlisting}
+
+Computing binomial coefficients in $O(\log M)$, where $M$ is the modulo.
+\begin{lstlisting}
+mi C(mi n, mi k) {
+  return fact[n] / (fact[k] * fact[n-k]);
+}
+\end{lstlisting}
+
+
+\newpage
+\subsection{Inclusion-Exclusion Principle}
+
+A general example code to showcase the inclusion-exclusion principle.
+
+\begin{lstlisting}
+for (int i = 1; i < (1 << n); i++) {
+  vector<int> current;
+  int bit_count = 0;
+  for (int bit = 0; bit < n; bit++) {
+    if ((1 << bit) & i) {
+      // add the i-th element to
+      // the data structure
+      add(current, element[i])
+      bit_count++;
+    }
+  }
+
+  // depending on the parity of the bitcount,
+  // calculate and modify the answer
+  if (bit_count % 2 == 0) {
+    ans -= calc(current);
+  } else {
+    ans += calc(current);
+  }
+}
+
+\end{lstlisting}
+
+\subsection{Dynamic Programming - Sum over subsets}
+
+\begin{center}
+$\displaystyle F_{mask} = \sum_{i \subseteq mask}^{} A_i$
+\end{center}
+
+\textbf{Time Complexity: $O(N \cdot 2^N)$}
+
+\begin{lstlisting}
+for (int i = 0; i < (1 << N); ++i) F[i] = A[i];
+for (int i = 0; i < N; ++i) {
+  for (int mask = 0; mask < (1 << N); ++mask) {
+  	if(mask & (1<<i)) F[mask] += F[mask^(1<<i)];
+  }
+}
+\end{lstlisting}
+
+If we want for each subset to sum up the functions with inclusion-exclusion in mind, we can use the Mobius Transform.
+
+\begin{center}
+  $\displaystyle \mu(f(s)) = \sum_{s' \subseteq s} (-1)^{|s \setminus s'|} f(s')$
+\end{center}
+
+\textbf{Time Complexity: $O(N \cdot 2^N)$}
+
+\begin{lstlisting}
+for (int i = 0; i < N; i++) {
+  for (int mask = 0; mask < (1 << N); mask++) {
+    if ((mask & (1 << i)) != 0) {
+      f[mask] -= f[mask ^ (1 << i)];
+    }
+  }
+}
+for(int mask = 0; mask < (1 << N); mask++) {
+  zinv[mask] = mu[mask] = f[mask];
+}
+\end{lstlisting}
+
+\newpage
+
+\subsection{Fractional Binary Search}
+\subsection{Miller Rabin Primality Test}
+\subsection{Matrix Exponentiation}
+\subsection{Phi function}
+\subsection{Gaussian Elimination}
+\subsection{Determinant}
+\subsection{K-th Permutation}
+\subsection{Berlekamp-Messay Algorithm}
+\subsection{Chinese Remainder Theorem}
+\subsection{Mobius Inversion}
+\subsection{GCD \& LCM Convolution}
+\subsection{Fast Fourier Transform} 
+\subsection{Number Theoretic Transform}
+\subsection{Fast Subset Transform}
+\subsection{More Operations on Finite Polynomials}
+\subsection{Game Theory, Nim Game}
+\subsection{Simplex}
+
+\newpage
+
+\subsection{Miscellaneous Stuff}
+
+\subsubsection{Gray Code}
+
+Gray code is a binary numeral system where two successive values differ in only one bit. \cite{GrayCode_CPAlgo}
+For example, the sequence of Gray codes for 3-bit numbers is: 000, 001, 011, 010, 110, 111, 101, 100...
+
+\begin{lstlisting}
+int g(int n) {
+  return n ^ (n >> 1);
+}
+
+int rev_g(int g) {
+  int n = 0;
+  for (; g; g >>= 1)
+    n ^= g;
+  return n;
+}
+\end{lstlisting}
+
+\subsubsection{Lemmas}
+
+\begin{lemma}
+$1 + 3 + 5 + \cdots + (2n - 1) = n^2$
+\end{lemma}
+
+\begin{lemma}
+$\displaystyle \sum_{i=1}^{n} i \cdot i! = (n + 1)! - 1$
+\end{lemma}
+
+\begin{lemma}
+  $2^n < n!$ , $n > 3$
+\end{lemma}
+
+\begin{lemma}
+  $|a_1+a_2+\cdots+a_n| \leq |a_1| + |a_2| + \cdots + |a_n|$, for any real numbers $a_1, a_2, \dots a_n$
+\end{lemma}
+
+\begin{lemma}
+  For any array $(a_1, a_2, \dots a_n)$, there exist $l$ and $r$, such that $1 \leq l < r \leq n$ and \\ $\displaystyle \sum_{i=l}^{r} a_i \equiv 0$ (mod n).
+\end{lemma}
