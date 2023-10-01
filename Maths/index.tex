@@ -25,6 +25,22 @@ int geometric(int N, int A, int M) {
 
 \subsection{Primes}
 
+List of primes close to $10^9$:
+\begin{itemize}
+  \item 997927277
+  \item 997929287
+  \item 999999599
+  \item 1000001333
+  \item 1000000123
+\end{itemize}
+
+\hrulefill \vspace{-\baselineskip}
+\begin{multicols}{2}
+\inputminted[autogobble,fontsize=\tiny]{C++}{Maths/primes.cpp}
+\end{multicols}
+\vspace{-\baselineskip}
+\noindent \hrulefill
+
 \subsubsection{Carmichael Lambda (Universal Totient Function)}
 
 $\lambda(n)$ is a smallest number that satisfies $a^{\lambda(n)} \equiv 1$ (mod $n$)
@@ -115,6 +131,17 @@ vector<ll> carmichael_lambda(ll lo, ll hi) { // lambda(n) for all n in [lo, hi)
   return lambda; // lambda[k-lo] = lambda(k)
 }
 \end{lstlisting}
+
+\newpage
+
+\subsubsection{Miller Rabin Primality Test and Pollard Factorization Algorithm}
+
+\hrulefill \vspace{-\baselineskip}
+\begin{multicols}{2}
+\inputminted[autogobble,fontsize=\footnotesize]{C++}{Maths/pollard.cpp}
+\end{multicols}
+\vspace{-\baselineskip}
+\noindent \hrulefill
 
 \newpage
 \subsection{Modular Arithmetic}
@@ -433,27 +460,77 @@ for(int mask = 0; mask < (1 << N); mask++) {
 \newpage
 
 \subsection{Fractional Binary Search}
-\subsection{Miller Rabin Primality Test}
 \subsection{Matrix Exponentiation}
 \subsection{Phi function}
 \subsection{Gaussian Elimination}
 \subsection{Determinant}
 \subsection{K-th Permutation}
+
+\hrulefill \vspace{-\baselineskip}
+\begin{multicols}{2}
+\inputminted[autogobble,fontsize=\tiny]{C++}{Maths/kth_permutation.cpp}
+\end{multicols}
+\vspace{-\baselineskip}
+\noindent \hrulefill
+
 \subsection{Berlekamp-Messay Algorithm}
+
+\hrulefill \vspace{-\baselineskip}
+\begin{multicols}{2}
+\inputminted[autogobble,fontsize=\tiny]{C++}{Maths/berlekampmessay.cpp}
+\end{multicols}
+\vspace{-\baselineskip}
+\noindent \hrulefill
+
+\newpage
+
 \subsection{Chinese Remainder Theorem}
 
-\hrulefill
+\hrulefill \vspace{-\baselineskip}
 \begin{multicols}{2}
-\inputminted[autogobble,fontsize=\footnotesize]{C++}{Maths/crt.cpp}
+\inputminted[autogobble,fontsize=\tiny]{C++}{Maths/crt.cpp}
 \end{multicols}
-\hrulefill
+\vspace{-\baselineskip}
+\noindent \hrulefill
 
 \subsection{Mobius Inversion}
 \subsection{GCD \& LCM Convolution}
-\subsection{Fast Fourier Transform} 
+
+\hrulefill \vspace{-\baselineskip}
+\begin{multicols}{2}
+\inputminted[autogobble,fontsize=\tiny]{C++}{Maths/gcd_convolution.cpp}
+\end{multicols}
+\vspace{-\baselineskip}
+\noindent \hrulefill
+
+\subsection{Fast Fourier Transform}
+
+\hrulefill \vspace{-\baselineskip}
+\begin{multicols}{2}
+\inputminted[autogobble,fontsize=\tiny]{C++}{Maths/fft.cpp}
+\end{multicols}
+\vspace{-\baselineskip}
+\noindent \hrulefill
+
 \subsection{Number Theoretic Transform}
+
+\hrulefill \vspace{-\baselineskip}
+\begin{multicols}{2}
+\inputminted[autogobble,fontsize=\tiny]{C++}{Maths/ntt.cpp}
+\end{multicols}
+\vspace{-\baselineskip}
+\noindent \hrulefill
+
 \subsection{Fast Subset Transform}
 \subsection{More Operations on Finite Polynomials}
+
+\hrulefill \vspace{-\baselineskip}
+\begin{multicols}{2}
+\inputminted[autogobble,fontsize=\tiny]{C++}{Maths/poly.cpp}
+\end{multicols}
+\vspace{-\baselineskip}
+\noindent \hrulefill
+
 \subsection{Game Theory, Nim Game}
 \subsection{Simplex}
 

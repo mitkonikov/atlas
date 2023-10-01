@@ -1,5 +1,17 @@
 \subsection{Binary and Ternary Search Function}
+
+\hrulefill \vspace{-\baselineskip}
+\inputminted[autogobble,fontsize=\footnotesize]{C++}{Algorithms/ternary.cpp}
+\vspace{-\baselineskip}
+\noindent \hrulefill
+
 \subsection{Index Compression}
+
+\hrulefill \vspace{-\baselineskip}
+\inputminted[autogobble,fontsize=\footnotesize]{C++}{Algorithms/index_compression.cpp}
+\vspace{-\baselineskip}
+\noindent \hrulefill
+
 \subsection{Fast Eratosthenes Sieve}
 
 \begin{lstlisting}
@@ -26,8 +38,52 @@ struct Sieve {
 };
 \end{lstlisting}
 
+\newpage
+
 \subsection{Mo's Algorithm}
+
+\hrulefill \vspace{-\baselineskip}
+\begin{multicols}{2}
+\inputminted[autogobble,fontsize=\footnotesize]{C++}{Algorithms/moalgo.cpp}
+\end{multicols}
+\vspace{-\baselineskip}
+\noindent \hrulefill
+
 \subsection{Merge Sort}
 \subsection{K-th Order Statistic}
 \subsection{K-th Shortest Paths}
+
+We are given a weighted graph. The k-shortest walks problem
+seeks k different s-t walks (paths allowing repeated vertices)
+in the increasing order of the lengths.
+
+If we maintain each walks explicitly, it must costs $O(k^2 m)$ time.
+To avoid this complexity, we maintain the walks in a compact format.
+Let us fix a reverse shortest path tree from $t$. A deviation is an 
+edge that is not on the tree. Any walk is represented by a concatenation
+of deviations and paths on the tree. We enumerate all possible 
+deviations and use the best-first search to find the $k$-th solution.
+
+The Eppstein's algorithm maintains the set of deviations by 
+the augmented persistent heaps and emurates the best-first search. 
+Here, we implemented a simplified version of the Eppstein's algorithm,
+which uses the simple persistent heaps instead of the augmented ones.
+It increases the space from $O(m + n \log n)$ to $O(m \log n)$. \cite{Eppstein}
+
+Complexity: $O(m \log m)$ construction and $O(k \log k)$ for k-th search
+
+\hrulefill \vspace{-\baselineskip}
+\begin{multicols}{2}
+\inputminted[autogobble,fontsize=\tiny]{C++}{Algorithms/kth_shortest_path.cpp}
+\end{multicols}
+\vspace{-\baselineskip}
+\noindent \hrulefill
+
 \subsection{Shunting Yard}
+
+\hrulefill \vspace{-\baselineskip}
+\begin{multicols}{2}
+\inputminted[autogobble,fontsize=\tiny]{C++}{Algorithms/shunting_yard.cpp}
+\end{multicols}
+\vspace{-\baselineskip}
+\noindent \hrulefill

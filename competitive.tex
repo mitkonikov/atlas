@@ -83,6 +83,39 @@
 
 \newpage
 
+\section{Foreword}
+
+Dear Reader, I collected this set of algorithms and data structures from various sources
+over the years and now is the time to give it all to the world. This collection of algorithms
+and data structures contains some very well known ones, but also some that are so specific, that
+they have a single use case only.
+
+Some of the algorithms, for shorter code use the following template:
+
+\begin{lstlisting}
+#define rep(i, a, b) for(int i = a; i < (b); ++i)
+#define all(c) ((c).begin()), ((c).end())
+#define sz(x) (int)(x).size()
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+\end{lstlisting}
+
+Always try to do the following checks before submitting a problem:
+\begin{itemize}
+  \item Edge cases?
+  \item Overflows?
+  \item Memory allocation (MLE)?
+  \item Out-of-bounds on array access?
+  \item Did you escape all characters?
+  \item Recursion depth, stack memory?
+\end{itemize}
+
+\noindent \hrulefill
+
+\textbf{I dedicate this book to You - all of the people that work hard, even if they know
+that they will never be appreciated for what they have accomplished or what they tried to achieve.}
+
 \section{Graphs}
 
 \import{./Graphs}{index.tex}
@@ -134,6 +167,12 @@
 \section{Miscellaneous Stuff}
 
 \import{./Misc}{index.tex}
+
+\newpage
+
+\section{Picked Solutions}
+
+\import{./Solutions}{index.tex}
 
 \newpage
 \section{References}

@@ -52,4 +52,31 @@ Locally, we use the MikTeX package to build the book. However, for the "minted" 
     - CRT
     - Rotations
     - Graham Scan
-    - Persistant Segment Tree
+    - Persistent Segment Tree
+    - Kinetic Tournament Data Structure
+    - Persistent Array
+    - Treap
+    - 3D Coordinate-Wise Domination
+    - 3D Geometry
+    - Circle Helper Functions
+    - Convex Layers
+    - Online Convex Hull Merger
+    - GJK
+    - Graham Scan Python Implementation
+    - Half-Plane Intersection in O(N log N)
+    - Random Geometry Stuff
+    - BerlekampMassey Algorithm
+    - FFT
+    - GCD Convolution
+    - Kth Permutation
+    - NTT
+    - Pollard & Miller Rabin
+    - Operations on Polynomials
+    - Primes
+    - Calendar Conversions
+    - Exact Cover
+    - Roman Numerals
+    - Picked solutions
+    - Aho Corassick
+    - KMP
+    - MDST

@@ -1,16 +1,6 @@
 For every graph algorithm, the nodes will be numbered from $0$ to $N-1$. \newline
 When talking about time complexity, we will interchangeably use $N$ as the number of vertices
 in a graph and $M$ as the number of edges.
-Some of the algorithms, for shorter code use the following template:
-
-\begin{lstlisting}
-#define rep(i, a, b) for(int i = a; i < (b); ++i)
-#define all(c) ((c).begin()), ((c).end())
-#define sz(x) (int)(x).size()
-typedef long long ll;
-typedef pair<int, int> pii;
-typedef vector<int> vi;
-\end{lstlisting}
 
 \subsection{Topological Sort}
 
@@ -265,11 +255,12 @@ bool isBipartite() {
 
 \subsection{2SAT}
 
-\hrulefill
+\hrulefill \vspace{-\baselineskip}
 \begin{multicols}{2}
 \inputminted[autogobble,fontsize=\footnotesize]{C++}{Graphs/2sat.cpp}
 \end{multicols}
-\hrulefill
+\vspace{-\baselineskip}
+\noindent \hrulefill
 
 \newpage
 
@@ -1547,8 +1538,9 @@ since it takes modulos to avoid multiprecision numbers. \cite{Bjorklund}
 
 Complexity: $O(n 2^n)$ 
 
-\hrulefill
+\noindent \hrulefill \vspace{-\baselineskip}
 \begin{multicols}{2}
 \inputminted[autogobble,fontsize=\footnotesize]{C++}{Graphs/chromatic.cpp}
 \end{multicols}
-\hrulefill
+\vspace{-\baselineskip}
+\noindent \hrulefill
