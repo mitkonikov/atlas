@@ -26,6 +26,10 @@ The goal is to have relatively short pieces of code, but too short that it will 
 Everyone is encouraged to contribute, add, fix, change and improve the book. I hope more and more people contribute!
 All contributors will be added to a contributor section at the end of the book.
 
+## Building the book
+
+Locally, we use the MikTeX package to build the book. However, for the "minted" package, you will also need to install Python and pip install Pygments for the package to compile.
+
 ### Open issues:
 
  - Contributors section (List of contributors)
@@ -36,3 +40,16 @@ All contributors will be added to a contributor section at the end of the book.
  - Unit Tests
  - References
  - LaTeX fixes
+
+## Change Log
+
+ - 01.10.2023
+    - 2SAT
+    - Chromatic Number
+    - LCA
+    - HLD
+    - Centroid
+    - CRT
+    - Rotations
+    - Graham Scan
+    - Persistant Segment Tree

@@ -262,7 +262,16 @@ bool isBipartite() {
 \end{lstlisting}
 
 \newpage
+
 \subsection{2SAT}
+
+\hrulefill
+\begin{multicols}{2}
+\inputminted[autogobble,fontsize=\footnotesize]{C++}{Graphs/2sat.cpp}
+\end{multicols}
+\hrulefill
+
+\newpage
 
 \subsection{Articulation Points}
 
@@ -1522,4 +1531,24 @@ struct Maxclique {
 
 \end{lstlisting}
 
+\newpage
+
 \subsection{Chromatic Number}
+
+A vertex coloring is an assignment of colors to the vertices
+such that no adjacent vertices have a same color. The smallest
+number of colors for a vertex coloring is called the chromatic
+number. Computing the chromatic number is NP-hard.
+
+We can compute the chromatic number by the inclusion-exlusion
+principle. The complexity is $O(poly(n) 2^n)$. The following
+implementation runs in $O(n 2^n)$ but is a Monte-Carlo algorithm 
+since it takes modulos to avoid multiprecision numbers. \cite{Bjorklund}
+
+Complexity: $O(n 2^n)$ 
+
+\hrulefill
+\begin{multicols}{2}
+\inputminted[autogobble,fontsize=\footnotesize]{C++}{Graphs/chromatic.cpp}
+\end{multicols}
+\hrulefill
