@@ -80,3 +80,16 @@ Locally, we use the MikTeX package to build the book. However, for the "minted" 
     - Aho Corassick
     - KMP
     - MDST
+ - 02.10.2023
+    - 2D Sparse Segment Tree
+    - 2D Sparse Table
+    - Binary Indexed Heap
+    - Fenwick Tree
+    - Lazy Segment Tree
+    - Min-Max Heap
+    - Persistent Heap
+    - Segment Tree
+    - Skew Heap
+    - Nearest Smaller
+    - Binary Exponentiation
+    - Gosper's Hack

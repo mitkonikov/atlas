@@ -45,16 +45,13 @@ vector<point> graham_scan(vector<point> points) {
 
 int main() {
   vector<point> points = {
-    {44, 140}, {67, 153}, {69, 128}, {21, 111},
-    {95, 149}, {132, 119}, {103, 123}, {68, 95},
-    {33, 77}, {6, 51}, {53, 24}, {85, 47},
-    {115, 96}, {138, 73}, {129, 31}, {110, 11}
+    {44, 140}, {67, 153}, {69, 128}
   };
 
   vector<point> hull = graham_scan(points);
   for (int i = 0; i < hull.size(); i++) {
     cout << '(' << hull[i].first << ", "
-	<< hull[i].second << ')' << endl;
+	  << hull[i].second << ')' << endl;
   }
 
   return 0;

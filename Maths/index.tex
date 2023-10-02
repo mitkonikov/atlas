@@ -1,6 +1,12 @@
 \subsection{Basic Algorithms}
 
+\begin{multicols}{2}
 \subsubsection{Binary Exponentiation}
+
+\hrulefill
+\inputminted[autogobble,fontsize=\footnotesize]{C++}{Maths/binary_expo.cpp}
+\vspace{-\baselineskip}
+\noindent \hrulefill
 
 \subsubsection{Sum of Geometric Progression}
 
@@ -22,6 +28,8 @@ int geometric(int N, int A, int M) {
   return total;
 }
 \end{lstlisting}
+
+\end{multicols}
 
 \subsection{Primes}
 
@@ -75,7 +83,8 @@ ll carmichael_lambda(ll n) {
   return lambda;
 }
 \end{lstlisting}
-\newpage
+
+\begin{multicols}{2}
 \begin{lstlisting}
   vector<ll> primes(ll lo, ll hi) { // primes in [lo, hi)
   const ll M = 1 << 14, SQR = 1 << 16;
@@ -131,6 +140,7 @@ vector<ll> carmichael_lambda(ll lo, ll hi) { // lambda(n) for all n in [lo, hi)
   return lambda; // lambda[k-lo] = lambda(k)
 }
 \end{lstlisting}
+\end{multicols}
 
 \newpage
 
