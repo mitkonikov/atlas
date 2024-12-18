@@ -24,7 +24,7 @@ struct line {
 
 vector<point> intersect(circle C, circle D) {
   double d = abs(C.p - D.p);
-  if (sign(d - C.r + D.r) > 0) return {};        // too far
+  if (sign(d - (C.r + D.r)) > 0) return {};        // too far
   if (sign(d - abs(C.r - D.r)) <= 0) return {};  // too close
   double a = (C.r * C.r - D.r * D.r + d * d) / (2 * d);
   double h = sqrt(C.r * C.r - a * a);

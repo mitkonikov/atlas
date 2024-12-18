@@ -5,6 +5,9 @@ Our aim is to create the world's first fully open-source large atlas of
 algorithms, data structures and mathematical concepts used in competitive programming
 that can be easily modified, printed and used in ACM competitions.
 
+> [!CAUTION]
+> **The competitive.pdf is not the latest version. It lacks some bug fixes. We will soon publish a new release. For now, you can download the Atlas and build the LaTeX for yourself.**
+
 # The problem with sources
 
 The implementations are taken from various of sources with mostly CC0 license.
@@ -15,6 +18,7 @@ Some known sources that need to be included for many of the algorithms are:
  - [KACTL Library](https://github.com/kth-competitive-programming/kactl)
  - [EkzLIB](https://ekzlib.netlify.app/home)
  - [CP-Algorithms](https://cp-algorithms.com/)
+ - [Spaghetti-Source's Algorithms](https://github.com/spaghetti-source/algorithm)
 
 # Coding Style
 
