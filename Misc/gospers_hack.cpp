@@ -1,12 +1,7 @@
-// 
-//  Iterate through the bit masks by increasing number of ON bits.
-//  For every C(N, K) bits the function f() is called.
-// 
-
 #define ll long long
 void GospersHack(int n, int k, function<void(ll)> f) {
-    ll set = (1 << k) - 1;
-    ll limit = (1 << n);
+    ll set = (1LL << k) - 1;
+    ll limit = (1LL << n);
     while (set < limit) {
         f(set);
         ll c = set & - set;

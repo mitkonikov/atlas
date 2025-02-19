@@ -1,5 +1,9 @@
 \subsection{Gosper's Hack}
 
+The following snippet allows you to iterate through all
+$N\choose K$ bit masks in increasing number of set bits.
+For every bit mask the function $f$ is called. Limits: $K < 63$.
+
 \hrulefill \vspace{-\baselineskip}
 \begin{multicols}{2}
 \inputminted[autogobble,fontsize=\tiny]{C++}{Misc/gospers_hack.cpp}
