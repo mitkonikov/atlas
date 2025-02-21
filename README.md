@@ -5,8 +5,10 @@ Our aim is to create the world's first fully open-source large atlas of
 algorithms, data structures and mathematical concepts used in competitive programming
 that can be easily modified, printed and used in ACM competitions.
 
-> [!CAUTION]
-> **The competitive.pdf is not the latest version. It lacks some bug fixes. We will soon publish a new release. For now, you can download the Atlas and build the LaTeX for yourself.**
+> [!NOTE]
+> We don't push the `.pdf` directly in the repository, but we have a CI/CD workflow that builds
+> the `.pdf` on every push to the main branch and makes a new release of it.
+> The latest `.pdf` can be found under Releases.
 
 # The problem with sources
 
