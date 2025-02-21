@@ -1,7 +1,12 @@
-name: Build LaTeX book
-on: [push]
+name: Build and Release LaTeX book
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
-  build_latex:
+  build-and-release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,11 +26,64 @@ jobs:
       - name: List Files
         run: ls
 
-      - name: List Output Files
-        run: ls /home/runner/work/atlas/atlas/competitive.pdf
-
       - name: Upload PDF file
         uses: actions/upload-artifact@v4
         with:
           name: PDF
-          path: /home/runner/work/atlas/atlas/competitive.pdf
+          path: competitive.pdf
+      
+      - name: Set environment variables for secrets
+        run: |
+          echo "VERSION_MAJOR_MINOR=${{ secrets.VERSION_MAJOR_MINOR }}" >> $GITHUB_ENV
+          echo "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
+
+      - name: Get Latest Release Tag
+        id: get_version
+        run: |
+          BASE_VERSION="${{ secrets.VERSION_MAJOR_MINOR }}"
+
+          if [[ "$BASE_VERSION" =~ ^v[0-9]+\.[0-9]+\.0$ ]]; then
+            BASE_VERSION="${BASE_VERSION%.*}"
+          else
+            echo "If it's a fork, we shouldn't make releases."
+            exit 0
+          fi
+
+          LATEST_TAG=$(git tag --sort=-v:refname | grep -E "^${BASE_VERSION}\.[0-9]+$" | head -n 1)
+
+          if [[ "$LATEST_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            PATCH_NUMBER=$(echo "$LATEST_TAG" | awk -F. '{print $3}')
+            NEW_VERSION="${BASE_VERSION}.$((PATCH_NUMBER + 1))"
+          else
+            NEW_VERSION="${BASE_VERSION}.0"
+          fi
+
+          echo "NEW_TAG=$NEW_VERSION" >> $GITHUB_ENV
+          echo "Next release: $NEW_VERSION"
+
+      - name: Push New Tag
+        run: |
+          BASE_VERSION="${{ secrets.VERSION_MAJOR_MINOR }}"
+
+          if [[ "$BASE_VERSION" =~ ^v[0-9]+\.[0-9]+\.0$ ]]; then
+            echo ${BASE_VERSION}
+          else
+            echo "If it's a fork, we shouldn't push a new tag."
+            exit 0
+          fi
+          
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git tag $NEW_TAG
+          git push origin $NEW_TAG
+
+      - name: Create GitHub Release
+        if: env.VERSION_MAJOR_MINOR != '' && env.GITHUB_TOKEN != ''
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.NEW_TAG }}
+          name: "Release ${{ env.NEW_TAG }}"
+          body: "Automated release of the latest LaTeX PDF build of the Atlas."
+          files: competitive.pdf
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
