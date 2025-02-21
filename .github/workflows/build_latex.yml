@@ -9,7 +9,14 @@ jobs:
         with:
           scheme: full
           run: |
+            echo "Installing dependencies..."
             apk add py3-pygments
+            echo "Listing files in current directory..."
+            ls .
+            echo "Building LaTeX book..."
+            latexmk -c
+            latexmk -bibtex -pdf -interaction=nonstopmode competitive.tex
+            latexmk -c
 
       - name: List Files
         run: ls
