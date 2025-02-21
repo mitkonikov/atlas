@@ -4,10 +4,14 @@ on:
   push:
     branches:
       - main
+    tags-ignore:
+      - '*'
 
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # 🚀 Grants permission to push tags
     steps:
       - uses: actions/checkout@v4
       - uses: xu-cheng/texlive-action@v2
@@ -32,7 +36,7 @@ jobs:
           name: PDF
           path: competitive.pdf
       
-      - name: Set environment variables for secrets
+      - name: Set Environment Variables for Secrets
         run: |
           echo "VERSION_MAJOR_MINOR=${{ secrets.VERSION_MAJOR_MINOR }}" >> $GITHUB_ENV
           echo "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
@@ -61,6 +65,19 @@ jobs:
           echo "NEW_TAG=$NEW_VERSION" >> $GITHUB_ENV
           echo "Next release: $NEW_VERSION"
 
+      - name: Configure Git
+        run: |
+          if [[ "$BASE_VERSION" =~ ^v[0-9]+\.[0-9]+\.0$ ]]; then
+            echo ${BASE_VERSION}
+          else
+            echo "If it's a fork, we shouldn't push a new tag."
+            exit 0
+          fi
+
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/mitkonikov/atlas.git
+
       - name: Push New Tag
         run: |
           BASE_VERSION="${{ secrets.VERSION_MAJOR_MINOR }}"
@@ -72,12 +89,10 @@ jobs:
             exit 0
           fi
           
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
           git tag $NEW_TAG
           git push origin $NEW_TAG
 
-      - name: Create GitHub Release
+      - name: Create Release
         if: env.VERSION_MAJOR_MINOR != '' && env.GITHUB_TOKEN != ''
         uses: softprops/action-gh-release@v1
         with:
